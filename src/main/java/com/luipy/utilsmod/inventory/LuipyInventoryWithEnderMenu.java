@@ -164,7 +164,12 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 					if (!moveItemStackTo(moved, O + 9, O + 45, false)) {
 						return ItemStack.EMPTY;
 					}
-				} else if (!moveItemStackTo(moved, ENDER_SLOT_START, ENDER_SLOT_END, false) && !moveItemStackTo(moved, O + 9, O + 46, true)) {
+				} else if (v >= 9) {
+					// Main/hotbar/offhand: vanilla-style shift within player slots only (no quick-move into ender).
+					if (!moveItemStackTo(moved, O + 9, O + 46, true)) {
+						return ItemStack.EMPTY;
+					}
+				} else {
 					return ItemStack.EMPTY;
 				}
 			}
