@@ -45,13 +45,6 @@ public final class LuipyConfigScreens {
 			.setSaveConsumer(v -> cfg.requireNearbyEnderChestBlock = v)
 			.build());
 
-		general.addEntry(eb.startIntField(Component.translatable("luipy-utils-mod.config.nearby_radius"), cfg.nearbySearchRadiusBlocks)
-			.setDefaultValue(48)
-			.setMin(1)
-			.setMax(128)
-			.setSaveConsumer(v -> cfg.nearbySearchRadiusBlocks = v)
-			.build());
-
 		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.show_toasts"), cfg.showToastsOnFailure)
 			.setDefaultValue(true)
 			.setSaveConsumer(v -> cfg.showToastsOnFailure = v)

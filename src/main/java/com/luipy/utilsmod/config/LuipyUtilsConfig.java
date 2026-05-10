@@ -17,7 +17,5 @@ public final class LuipyUtilsConfig {
 	public boolean requireEnderChestItem = true;
 	/** When {@link #alwaysAllowVirtualOpen} is false: require a loaded ender chest block nearby (OR with item). */
 	public boolean requireNearbyEnderChestBlock = true;
-	/** How far to search for a loaded ender chest block (Chebyshev / max axis distance). */
-	public int nearbySearchRadiusBlocks = 48;
 	public boolean showToastsOnFailure = true;
 }

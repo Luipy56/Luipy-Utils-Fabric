@@ -6,7 +6,6 @@
 	"luipy-utils-mod.config.always_virtual": "Permitir siempre abrir el cofre de ender (ignora ítem/bloque)",
 	"luipy-utils-mod.config.require_item": "Condición: requerir ítem cofre de ender (O con bloque cercano)",
 	"luipy-utils-mod.config.require_block": "Condición: requerir cofre de ender colocado cerca (O con ítem)",
-	"luipy-utils-mod.config.nearby_radius": "Radio de búsqueda del cofre colocado (bloques)",
 	"luipy-utils-mod.config.show_toasts": "Mostrar aviso en chat cuando no se puede abrir la vista combinada (servidor sin mod)",
 	"luipy-utils-mod.screen.inventory_with_ender": "Inventario y cofre de ender",
 	"luipy-utils-mod.message.combined_requires_mod_on_server": "Inventario + cofre de ender a la vez requiere este mod en el servidor (o un mundo local con el mod)."

@@ -10,6 +10,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 public final class EnderGateEvaluation {
+	/**
+	 * Fixed Chebyshev radius (max axis distance from feet) for detecting a loaded ender chest block.
+	 * Matches the maximum chunk-aligned search the mod already capped at 128.
+	 */
+	public static final int LOADED_ENDER_CHEST_SEARCH_RADIUS_BLOCKS = 128;
+
 	private EnderGateEvaluation() {
 	}
 
@@ -22,12 +28,8 @@ public final class EnderGateEvaluation {
 		return false;
 	}
 
-	/** Nearest loaded ender chest block within Chebyshev radius of the player's feet, or empty if none. */
-	public static Optional<BlockPos> findNearestLoadedEnderChest(Player player, Level level, int radius) {
-		if (radius <= 0) {
-			return Optional.empty();
-		}
-		int r = Math.min(radius, 128);
+	private static Optional<BlockPos> findNearestLoadedEnderChest(Player player, Level level) {
+		int r = LOADED_ENDER_CHEST_SEARCH_RADIUS_BLOCKS;
 		BlockPos origin = player.blockPosition();
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		BlockPos best = null;
@@ -53,8 +55,8 @@ public final class EnderGateEvaluation {
 		return Optional.ofNullable(best);
 	}
 
-	public static boolean hasLoadedEnderChestNearby(Player player, Level level, int radius) {
-		return findNearestLoadedEnderChest(player, level, radius).isPresent();
+	public static boolean hasLoadedEnderChestNearby(Player player, Level level) {
+		return findNearestLoadedEnderChest(player, level).isPresent();
 	}
 
 	public static boolean passesGate(LuipyUtilsConfig cfg, Player player, Level level) {
@@ -70,7 +72,7 @@ public final class EnderGateEvaluation {
 			return false;
 		}
 		boolean hasItem = !needItem || playerCarriesEnderChest(player);
-		boolean hasBlock = !needBlock || hasLoadedEnderChestNearby(player, level, cfg.nearbySearchRadiusBlocks);
+		boolean hasBlock = !needBlock || hasLoadedEnderChestNearby(player, level);
 		return hasItem || hasBlock;
 	}
 }
