@@ -28,6 +28,16 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
  */
 public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContainer> {
 	public static final int ENDER_SLOTS = 27;
+	/**
+	 * Result slot + 2×2 crafting grid must occupy indices {@code 0..4}, matching {@link InventoryMenu}.
+	 * The recipe book ghost overlay and {@link net.minecraft.recipebook.PlaceRecipe} assume that layout
+	 * on the full {@link #slots} list (see client {@code ClientPacketListener} ghost recipe handling).
+	 */
+	private static final int CRAFTING_SLOT_COUNT = 1 + 4;
+	/** First menu slot index of the 3×9 ender chest panel (immediately after crafting slots). */
+	public static final int ENDER_SLOT_START = CRAFTING_SLOT_COUNT;
+	/** Exclusive end index of ender chest slots. */
+	public static final int ENDER_SLOT_END = ENDER_SLOT_START + ENDER_SLOTS;
 	/** Vertical space used by the ender chest panel (vanilla generic_54 top + 3 rows). */
 	public static final int TOP_PANEL_HEIGHT = 17 + 3 * 18;
 	public static final int INV_Y_SHIFT = TOP_PANEL_HEIGHT;
@@ -52,16 +62,15 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 		this.enderChest.startOpen(inventory.player);
 
 		int S = INV_Y_SHIFT;
-		for (int row = 0; row < 3; row++) {
-			for (int col = 0; col < 9; col++) {
-				addSlot(new Slot(enderChest, col + row * 9, 8 + col * 18, 18 + row * 18));
-			}
-		}
-
 		addSlot(new ResultSlot(inventory.player, craftSlots, resultSlots, 0, 154, 28 + S));
 		for (int row = 0; row < 2; row++) {
 			for (int col = 0; col < 2; col++) {
 				addSlot(new Slot(craftSlots, col + row * 2, 98 + col * 18, 18 + row * 18 + S));
+			}
+		}
+		for (int row = 0; row < 3; row++) {
+			for (int col = 0; col < 9; col++) {
+				addSlot(new Slot(enderChest, col + row * 9, 8 + col * 18, 18 + row * 18));
 			}
 		}
 		for (int i = 0; i < 4; i++) {
@@ -137,12 +146,12 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 		if (slot != null && slot.hasItem()) {
 			ItemStack moved = slot.getItem();
 			ret = moved.copy();
-			if (index < O) {
+			if (index >= ENDER_SLOT_START && index < ENDER_SLOT_END) {
 				if (!moveItemStackTo(moved, O + 9, O + 46, true)) {
 					return ItemStack.EMPTY;
 				}
 			} else {
-				int v = index - O;
+				int v = index < CRAFTING_SLOT_COUNT ? index : index - O;
 				if (v == 0) {
 					if (!moveItemStackTo(moved, O + 9, O + 45, true)) {
 						return ItemStack.EMPTY;
@@ -155,7 +164,7 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 					if (!moveItemStackTo(moved, O + 9, O + 45, false)) {
 						return ItemStack.EMPTY;
 					}
-				} else if (!moveItemStackTo(moved, 0, O, false) && !moveItemStackTo(moved, O + 9, O + 46, true)) {
+				} else if (!moveItemStackTo(moved, ENDER_SLOT_START, ENDER_SLOT_END, false) && !moveItemStackTo(moved, O + 9, O + 46, true)) {
 					return ItemStack.EMPTY;
 				}
 			}
@@ -168,7 +177,7 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 				return ItemStack.EMPTY;
 			}
 			slot.onTake(player, moved);
-			if (index == O) {
+			if (index == InventoryMenu.RESULT_SLOT) {
 				player.drop(moved, false);
 			}
 		}
@@ -198,7 +207,7 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 
 	@Override
 	public int getResultSlotIndex() {
-		return ENDER_SLOTS + InventoryMenu.RESULT_SLOT;
+		return InventoryMenu.RESULT_SLOT;
 	}
 
 	@Override
