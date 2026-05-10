@@ -46,22 +46,10 @@ public final class LuipyConfigScreens {
 			.build());
 
 		general.addEntry(eb.startIntField(Component.translatable("luipy-utils-mod.config.nearby_radius"), cfg.nearbySearchRadiusBlocks)
-			.setDefaultValue(128)
+			.setDefaultValue(48)
 			.setMin(1)
 			.setMax(128)
 			.setSaveConsumer(v -> cfg.nearbySearchRadiusBlocks = v)
-			.build());
-
-		general.addEntry(eb.startDoubleField(Component.translatable("luipy-utils-mod.config.ender_reach_bonus"), cfg.enderOpenReachBonus)
-			.setDefaultValue(6.0)
-			.setMin(0.0)
-			.setMax(32.0)
-			.setSaveConsumer(v -> cfg.enderOpenReachBonus = v)
-			.build());
-
-		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.try_vanilla_ender"), cfg.tryOpenNearestEnderOnVanillaServer)
-			.setDefaultValue(true)
-			.setSaveConsumer(v -> cfg.tryOpenNearestEnderOnVanillaServer = v)
 			.build());
 
 		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.show_toasts"), cfg.showToastsOnFailure)

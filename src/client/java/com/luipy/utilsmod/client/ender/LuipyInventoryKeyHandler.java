@@ -46,19 +46,7 @@ public final class LuipyInventoryKeyHandler {
 		}
 
 		client.setScreen(screen);
-		boolean willTryVanillaEnder = cfg.tryOpenNearestEnderOnVanillaServer
-			&& EnderGateEvaluation.hasLoadedEnderChestNearby(client.player, client.level, cfg.nearbySearchRadiusBlocks);
-		if (willTryVanillaEnder) {
-			client.execute(() -> {
-				if (LuipyClientState.serverHasLuipyMod()) {
-					return;
-				}
-				if (!(client.screen instanceof InventoryScreen)) {
-					return;
-				}
-				LuipyVanillaServerEnderFallback.tryUseNearestEnderChest(client, cfg);
-			});
-		} else if (cfg.showToastsOnFailure && client.player != null) {
+		if (cfg.showToastsOnFailure && client.player != null) {
 			client.player.displayClientMessage(
 				Component.translatable("luipy-utils-mod.message.combined_requires_mod_on_server"),
 				false

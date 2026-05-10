@@ -22,12 +22,8 @@ public final class EnderGateEvaluation {
 		return false;
 	}
 
-	/**
-	 * Nearest loaded ender chest block within Chebyshev radius of the player's feet, or empty if none.
-	 * When {@code maxEyeToCenterDistSq} is finite, only chests whose centre is within that squared distance
-	 * from the player's eyes are considered (for client-side interaction reach).
-	 */
-	public static Optional<BlockPos> findNearestLoadedEnderChest(Player player, Level level, int radius, double maxEyeToCenterDistSq) {
+	/** Nearest loaded ender chest block within Chebyshev radius of the player's feet, or empty if none. */
+	public static Optional<BlockPos> findNearestLoadedEnderChest(Player player, Level level, int radius) {
 		if (radius <= 0) {
 			return Optional.empty();
 		}
@@ -36,7 +32,6 @@ public final class EnderGateEvaluation {
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		BlockPos best = null;
 		double bestDistSq = Double.MAX_VALUE;
-		Vec3 eye = player.getEyePosition(1.0F);
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dy = -r; dy <= r; dy++) {
 				for (int dz = -r; dz <= r; dz++) {
@@ -47,23 +42,15 @@ public final class EnderGateEvaluation {
 					if (!level.getBlockState(pos).is(Blocks.ENDER_CHEST)) {
 						continue;
 					}
-					Vec3 center = Vec3.atCenterOf(pos);
-					double eyeSq = eye.distanceToSqr(center);
-					if (eyeSq > maxEyeToCenterDistSq) {
-						continue;
-					}
-					if (eyeSq < bestDistSq) {
-						bestDistSq = eyeSq;
+					double dSq = player.distanceToSqr(Vec3.atCenterOf(pos));
+					if (dSq < bestDistSq) {
+						bestDistSq = dSq;
 						best = pos.immutable();
 					}
 				}
 			}
 		}
 		return Optional.ofNullable(best);
-	}
-
-	public static Optional<BlockPos> findNearestLoadedEnderChest(Player player, Level level, int radius) {
-		return findNearestLoadedEnderChest(player, level, radius, Double.POSITIVE_INFINITY);
 	}
 
 	public static boolean hasLoadedEnderChestNearby(Player player, Level level, int radius) {
