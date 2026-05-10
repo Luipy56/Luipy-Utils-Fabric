@@ -26,6 +26,91 @@ loom {
 	}
 }
 
+/**
+ * Dedicated servers have no "allow cheats": operators are required for /gamemode etc.
+ * Fabric runClient assigns {@code Player###} names; we pre-op those plus anyone in {@code run/usercache.json}.
+ */
+tasks.register('prepareDevRunServer') {
+	group = 'fabric'
+	description = 'Writes run/ops.json and dev-friendly server.properties keys before runServer.'
+	doLast {
+		def runDir = file('run')
+		runDir.mkdirs()
+
+		def byName = new LinkedHashMap<String, Map>()
+		def usercacheFile = new File(runDir, 'usercache.json')
+		if (usercacheFile.exists()) {
+			try {
+				def parsed = new groovy.json.JsonSlurper().parse(usercacheFile)
+				if (parsed instanceof List) {
+					parsed.each { e ->
+						byName[e.name as String] = [
+							uuid               : e.uuid as String,
+							name               : e.name as String,
+							level              : 4,
+							bypassesPlayerLimit: false
+						]
+					}
+				}
+			} catch (Exception ignored) {
+			}
+		}
+		for (int i = 0; i < 1000; i++) {
+			String name = "Player${i}"
+			if (!byName.containsKey(name)) {
+				String uuid = java.util.UUID.nameUUIDFromBytes(
+					("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8)
+				).toString()
+				byName[name] = [
+					uuid               : uuid,
+					name               : name,
+					level              : 4,
+					bypassesPlayerLimit: false
+				]
+			}
+		}
+		new File(runDir, 'ops.json').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(byName.values()))
+
+		def propsFile = new File(runDir, 'server.properties')
+		if (propsFile.exists()) {
+			def lines = propsFile.readLines()
+			def overrides = [
+				'allow-flight' : 'true',
+				'gamemode'     : 'creative',
+				'online-mode'  : 'false'
+			]
+			def keysSeen = new HashSet<String>()
+			def out = new StringBuilder()
+			lines.each { line ->
+				def idx = line.indexOf('=')
+				if (idx > 0) {
+					def key = line.substring(0, idx).trim()
+					if (overrides.containsKey(key)) {
+						out.append(key).append('=').append(overrides[key]).append('\n')
+						keysSeen.add(key)
+						return
+					}
+				}
+				out.append(line).append('\n')
+			}
+			overrides.each { key, val ->
+				if (!keysSeen.contains(key)) {
+					out.append(key).append('=').append(val).append('\n')
+				}
+			}
+			propsFile.text = out.toString()
+		}
+	}
+}
+
+afterEvaluate {
+	def prep = tasks.findByName('prepareDevRunServer')
+	def run = tasks.findByName('runServer')
+	if (prep != null && run != null) {
+		run.dependsOn(prep)
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings loom.officialMojangMappings()
