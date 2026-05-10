@@ -40,7 +40,10 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 	public static final int ENDER_SLOT_END = ENDER_SLOT_START + ENDER_SLOTS;
 	/** Vertical space used by the ender chest panel (vanilla generic_54 top + 3 rows). */
 	public static final int TOP_PANEL_HEIGHT = 17 + 3 * 18;
-	public static final int INV_Y_SHIFT = TOP_PANEL_HEIGHT;
+	/** Visual gap between the ender chest band and the survival inventory texture below. */
+	public static final int PANEL_GAP_PX = 1;
+	/** Y offset for player inventory / crafting slots (below ender panel + {@link #PANEL_GAP_PX}). */
+	public static final int INV_Y_SHIFT = TOP_PANEL_HEIGHT + PANEL_GAP_PX;
 
 	private static final EquipmentSlot[] ARMOR_GUI_ORDER = new EquipmentSlot[] {
 		EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
