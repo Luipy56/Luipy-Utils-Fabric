@@ -6,6 +6,11 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+// JAR names in build/libs: {archives_base_name}-mc{minecraft_version}-{mod_version}.jar
+base {
+	archivesName = "${project.archives_base_name}-mc${project.minecraft_version}"
+}
+
 repositories {
 	mavenCentral()
 	maven { url = 'https://maven.shedaniel.me/' }
