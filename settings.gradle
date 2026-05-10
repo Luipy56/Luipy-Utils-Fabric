@@ -1,0 +1,22 @@
+pluginManagement {
+	def props = new Properties()
+	def gradlePropsFile = new File(settings.rootDir, 'gradle.properties')
+	if (gradlePropsFile.exists()) {
+		gradlePropsFile.withInputStream { props.load(it) }
+	}
+	String fabricMavenUrl = props.getProperty('fabric_maven_url', 'https://maven.fabricmc.net/').trim()
+	if (!fabricMavenUrl.endsWith('/')) {
+		fabricMavenUrl += '/'
+	}
+
+	repositories {
+		maven {
+			name = 'Fabric'
+			url fabricMavenUrl
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+rootProject.name = 'luipy-utils-mod'

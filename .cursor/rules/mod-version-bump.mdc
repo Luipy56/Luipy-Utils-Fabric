@@ -1,0 +1,11 @@
+---
+description: Bump mod patch version in gradle.properties when finishing a task
+alwaysApply: true
+---
+
+# Mod version (`0.0.x`)
+
+- `mod_version` lives in `gradle.properties` (wired into `fabric.mod.json` via Gradle).
+- Use **only** the `0.0.x` line (no `1.x` unless the user explicitly changes policy).
+- **Whenever you finish a user-requested task** that changes the mod (code, resources, or behavior), increment **`x` by 1** in `gradle.properties` before wrapping up (e.g. `0.0.1` → `0.0.2` → `0.0.3`).
+- If the task is documentation-only or trivial one-line typo with no functional change, bump is optional unless the user asked for a release.

@@ -1,0 +1,14 @@
+---
+description: Qué código va en main vs client y cómo evitar crashes en servidor dedicado
+globs: src/**/*.java
+alwaysApply: false
+---
+
+# Cliente vs servidor (`src/main` vs `src/client`)
+
+- **`src/main/java`**: lógica que puede ejecutarse en **cliente y servidor** (registros comunes, comandos del servidor, networking compartido, datos). Implementar entrypoint con `ModInitializer` en `com.luipy.utilsmod.LuipyUtilsMod`.
+- **`src/client/java`**: **solo** código que usa clases del paquete `net.minecraft.client.*`, render, teclas, pantallas, HUD. Implementar con `ClientModInitializer` en `com.luipy.utilsmod.client.*`.
+- **Prohibido** en `src/main`: referencias a `Minecraft`, `MinecraftClient`, pantallas, renderizado o cualquier API solo-cliente. Eso rompe el **servidor dedicado** en tiempo de carga.
+- **Registro duplicado**: registra items/blocks/entidades en **main** una sola vez; en **client** solo registradores de cliente (`BlockRenderLayer`, modelos, colores, etc.) si hace falta.
+- **Networking**: payloads y handlers deben declararse de forma que el servidor no cargue clases client-only; usar APIs de Fabric Networking y separar paquetes si es necesario.
+- **Comprobación en runtime**: `FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT` solo como último recurso; la separación de source sets es la norma en este proyecto.

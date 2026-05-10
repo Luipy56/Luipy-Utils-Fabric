@@ -1,0 +1,13 @@
+---
+description: Gradle, Loom, Java y versiones para este mod Fabric 1.20.4
+globs: build.gradle,settings.gradle,gradle.properties,gradle/wrapper/gradle-wrapper.properties
+alwaysApply: false
+---
+
+# Build y toolchain
+
+- **No cambiar** `splitEnvironmentSourceSets()` ni el bloque `mods { "luipy-utils-mod" { ... } }` salvo que renombres el mod de forma coordinada en todo el repo.
+- **Versiones**: alinear `minecraft_version`, `loader_version`, `fabric_api_version` y `loom_version` con [fabricmc.net/develop](https://fabricmc.net/develop); no mezclar Loom pensado para otra major de Gradle sin comprobar compatibilidad.
+- **Este repo**: Loom **1.6.11** + Gradle **8.7** + compilación **Java 17**; Loom **1.16+** exige **JVM 21** para ejecutar Gradle. Si migras a Loom 1.16, usa plugin `net.fabricmc.fabric-loom-remap`, Gradle 9.x y un **JDK 21** completo (con `javac`), y revisa `org.gradle.java.home`.
+- **Mappings**: el código usa **Mojang mappings** (`loom.officialMojangMappings()`). Los ejemplos en Yarn u otros nombres hay que **traducir** (p. ej. [mappings.dev](https://mappings.dev/), Linkie).
+- **EULA**: las mappings oficiales de Mojang tienen restricciones de redistribución; no publicar jars de mappings ni fuentes remapeadas de forma que viole la licencia.

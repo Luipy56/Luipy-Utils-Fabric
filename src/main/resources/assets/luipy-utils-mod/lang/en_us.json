@@ -1,0 +1,13 @@
+{
+	"luipy-utils-mod.config.title": "Luipy Utils",
+	"luipy-utils-mod.config.category.general": "General",
+	"luipy-utils-mod.config.master_enabled": "Enable mod features",
+	"luipy-utils-mod.config.show_ender_with_inventory": "Show ender chest together with inventory (E)",
+	"luipy-utils-mod.config.always_virtual": "Always allow opening ender chest (ignores item/block checks)",
+	"luipy-utils-mod.config.require_item": "Gate: require ender chest item (OR with nearby block)",
+	"luipy-utils-mod.config.require_block": "Gate: require nearby ender chest block (OR with item)",
+	"luipy-utils-mod.config.nearby_radius": "Nearby ender chest search radius (blocks)",
+	"luipy-utils-mod.config.show_toasts": "Show chat hint when remote open is not possible",
+	"luipy-utils-mod.screen.inventory_with_ender": "Inventory & Ender Chest",
+	"luipy-utils-mod.message.combined_requires_mod_on_server": "Inventory + ender chest together needs this mod on the server (or singleplayer with the mod)."
+}

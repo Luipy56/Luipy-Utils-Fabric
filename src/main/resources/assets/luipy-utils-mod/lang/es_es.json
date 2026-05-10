@@ -1,0 +1,13 @@
+{
+	"luipy-utils-mod.config.title": "Luipy Utils",
+	"luipy-utils-mod.config.category.general": "General",
+	"luipy-utils-mod.config.master_enabled": "Activar funciones del mod",
+	"luipy-utils-mod.config.show_ender_with_inventory": "Mostrar cofre de ender junto al inventario (E)",
+	"luipy-utils-mod.config.always_virtual": "Permitir siempre abrir el cofre de ender (ignora ítem/bloque)",
+	"luipy-utils-mod.config.require_item": "Condición: requerir ítem cofre de ender (O con bloque cercano)",
+	"luipy-utils-mod.config.require_block": "Condición: requerir cofre de ender colocado cerca (O con ítem)",
+	"luipy-utils-mod.config.nearby_radius": "Radio de búsqueda del cofre colocado (bloques)",
+	"luipy-utils-mod.config.show_toasts": "Mostrar aviso en chat si no se puede abrir en remoto",
+	"luipy-utils-mod.screen.inventory_with_ender": "Inventario y cofre de ender",
+	"luipy-utils-mod.message.combined_requires_mod_on_server": "Inventario + cofre de ender a la vez requiere este mod en el servidor (o un mundo local con el mod)."
+}

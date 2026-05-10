@@ -1,0 +1,14 @@
+---
+description: Mixins, fabric.mod.json y convenciones de recursos
+globs: "**/*Mixin*.java,**/*.mixins.json,**/fabric.mod.json"
+alwaysApply: false
+---
+
+# Mixins y `fabric.mod.json`
+
+- **Mod ID** estable: `luipy-utils-mod`. Debe coincidir con `id` en [fabric.mod.json](src/main/resources/fabric.mod.json), rutas `assets/luipy-utils-mod/`, y nombres de configs `luipy-utils-mod*.mixins.json`.
+- **Mixins comunes** en `src/main/resources/luipy-utils-mod.mixins.json` → paquete `com.luipy.utilsmod.mixin`. **Mixins solo cliente** en `src/client/resources/luipy-utils-mod.client.mixins.json` → `com.luipy.utilsmod.client.mixin`, y la entrada en `fabric.mod.json` con `"environment": "client"`.
+- **Métodos en mappings Mojang**: usar nombres oficiales en `@Inject` / `@Redirect` / targets; tras actualizar Minecraft, **revalidar** firmas y nombres de métodos.
+- **Mínimo invasivo**: preferir hooks de Fabric API y eventos antes que mixins amplios; en mixins, inyecciones acotadas y `require = 0` solo cuando el objetivo sea opcional y esté documentado.
+- **Recursos**: `processResources` expande `${version}` en `fabric.mod.json`; no romper esa plantilla sin actualizar `build.gradle`.
+- **Dependencias**: en `depends`, el mod de Fabric API es **`fabric-api`** (no `fabric` desde 1.19.2+).

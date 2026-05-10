@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "luipy-utils-mod",
+	"version": "${version}",
+	"name": "Luipy Utils",
+	"description": "Server and client utilities for Fabric.",
+	"authors": [
+		"Luipy"
+	],
+	"license": "MIT",
+	"accessWidener": "luipy-utils-mod.accesswidener",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.luipy.utilsmod.LuipyUtilsMod"
+		],
+		"client": [
+			"com.luipy.utilsmod.client.LuipyUtilsModClient"
+		],
+		"modmenu": [
+			"com.luipy.utilsmod.client.config.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		{
+			"config": "luipy-utils-mod.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~1.20.4",
+		"java": ">=17",
+		"fabric-api": "*",
+		"cloth-config": ">=13.0.0",
+		"modmenu": ">=9.0.0"
+	}
+}
