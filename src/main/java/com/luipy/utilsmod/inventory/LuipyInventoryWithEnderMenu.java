@@ -164,9 +164,18 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 					if (!moveItemStackTo(moved, O + 9, O + 45, false)) {
 						return ItemStack.EMPTY;
 					}
-				} else if (v >= 9) {
-					// Main/hotbar/offhand: vanilla-style shift within player slots only (no quick-move into ender).
-					if (!moveItemStackTo(moved, O + 9, O + 46, true)) {
+				} else if (v >= 9 && v < 36) {
+					// Same split as vanilla InventoryMenu: one [O+9,O+46) pass would include the source slot and
+					// `moved` is the live stack there, so merge can add the stack onto itself (2→4→8…).
+					if (!moveItemStackTo(moved, O + 36, O + 46, true)) {
+						return ItemStack.EMPTY;
+					}
+				} else if (v >= 36 && v < 45) {
+					if (!moveItemStackTo(moved, O + 9, O + 36, true)) {
+						return ItemStack.EMPTY;
+					}
+				} else if (v == 45) {
+					if (!moveItemStackTo(moved, O + 9, O + 45, true)) {
 						return ItemStack.EMPTY;
 					}
 				} else {
