@@ -7,6 +7,7 @@
 	"luipy-utils-mod.config.require_item": "Condición: requerir ítem cofre de ender (O con bloque cercano)",
 	"luipy-utils-mod.config.require_block": "Condición: requerir cofre de ender colocado cerca (O con ítem)",
 	"luipy-utils-mod.config.nearby_radius": "Radio de búsqueda del cofre colocado (bloques)",
+	"luipy-utils-mod.config.ender_reach_bonus": "Fallback vanilla: alcance extra (bloques) sobre el rango de interacción para elegir qué cofre clicar",
 	"luipy-utils-mod.config.try_vanilla_ender": "En servidor vanilla (sin mod): tras el inventario, intentar abrir el cofre de ender colocado más cercano",
 	"luipy-utils-mod.config.show_toasts": "Mostrar aviso en chat si no hay vista combinada y no se pudo usar el fallback vanilla",
 	"luipy-utils-mod.screen.inventory_with_ender": "Inventario y cofre de ender",

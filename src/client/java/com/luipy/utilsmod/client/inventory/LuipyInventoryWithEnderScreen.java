@@ -63,6 +63,8 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 
 	@Override
 	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+		int titleY = 6;
+		graphics.drawString(this.font, this.title, this.titleLabelX, titleY, 4210752, false);
 	}
 
 	@Override

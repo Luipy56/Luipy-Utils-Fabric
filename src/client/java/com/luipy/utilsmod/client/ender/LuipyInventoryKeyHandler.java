@@ -39,8 +39,8 @@ public final class LuipyInventoryKeyHandler {
 			return;
 		}
 
-		boolean canUseModPacket = LuipyClientState.serverHasLuipyMod() || client.getSingleplayerServer() != null;
-		if (canUseModPacket) {
+		boolean modServerOrSingleplayer = LuipyClientState.serverHasLuipyMod() || client.getSingleplayerServer() != null;
+		if (modServerOrSingleplayer) {
 			ClientPlayNetworking.send(LuipyNetworking.C2S_OPEN_ENDER, PacketByteBufs.empty());
 			return;
 		}
@@ -49,7 +49,15 @@ public final class LuipyInventoryKeyHandler {
 		boolean willTryVanillaEnder = cfg.tryOpenNearestEnderOnVanillaServer
 			&& EnderGateEvaluation.hasLoadedEnderChestNearby(client.player, client.level, cfg.nearbySearchRadiusBlocks);
 		if (willTryVanillaEnder) {
-			client.execute(() -> LuipyVanillaServerEnderFallback.tryUseNearestEnderChest(client, cfg.nearbySearchRadiusBlocks));
+			client.execute(() -> {
+				if (LuipyClientState.serverHasLuipyMod()) {
+					return;
+				}
+				if (!(client.screen instanceof InventoryScreen)) {
+					return;
+				}
+				LuipyVanillaServerEnderFallback.tryUseNearestEnderChest(client, cfg);
+			});
 		} else if (cfg.showToastsOnFailure && client.player != null) {
 			client.player.displayClientMessage(
 				Component.translatable("luipy-utils-mod.message.combined_requires_mod_on_server"),

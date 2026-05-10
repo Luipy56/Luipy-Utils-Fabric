@@ -27,7 +27,7 @@ public final class EnderChestOpeners {
 		}
 		SimpleMenuProvider factory = new SimpleMenuProvider(
 			(syncId, inventory, p) -> new LuipyInventoryWithEnderMenu(syncId, inventory),
-			Component.empty()
+			Component.translatable("luipy-utils-mod.screen.inventory_with_ender")
 		);
 		player.openMenu(factory);
 	}

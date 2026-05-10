@@ -18,7 +18,12 @@ public final class LuipyUtilsConfig {
 	/** When {@link #alwaysAllowVirtualOpen} is false: require a loaded ender chest block nearby (OR with item). */
 	public boolean requireNearbyEnderChestBlock = true;
 	/** How far to search for a loaded ender chest block (Chebyshev / max axis distance). */
-	public int nearbySearchRadiusBlocks = 48;
+	public int nearbySearchRadiusBlocks = 128;
+	/**
+	 * Extra distance (blocks) added to the client {@linkplain net.minecraft.client.multiplayer.MultiPlayerGameMode#getPickRange() pick range}
+	 * when choosing which ender chest to click on vanilla servers (the server still applies its own limits).
+	 */
+	public double enderOpenReachBonus = 6.0;
 	/**
 	 * When the server does not run this mod: after opening survival inventory, try a vanilla use-block on the
 	 * nearest loaded ender chest so the server opens the normal ender GUI (not merged with inventory; that still
