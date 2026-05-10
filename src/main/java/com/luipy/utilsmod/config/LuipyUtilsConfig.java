@@ -19,5 +19,11 @@ public final class LuipyUtilsConfig {
 	public boolean requireNearbyEnderChestBlock = true;
 	/** How far to search for a loaded ender chest block (Chebyshev / max axis distance). */
 	public int nearbySearchRadiusBlocks = 48;
+	/**
+	 * When the server does not run this mod: after opening survival inventory, try a vanilla use-block on the
+	 * nearest loaded ender chest so the server opens the normal ender GUI (not merged with inventory; that still
+	 * requires the mod on the server).
+	 */
+	public boolean tryOpenNearestEnderOnVanillaServer = true;
 	public boolean showToastsOnFailure = true;
 }

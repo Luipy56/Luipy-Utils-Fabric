@@ -7,7 +7,8 @@
 	"luipy-utils-mod.config.require_item": "Gate: require ender chest item (OR with nearby block)",
 	"luipy-utils-mod.config.require_block": "Gate: require nearby ender chest block (OR with item)",
 	"luipy-utils-mod.config.nearby_radius": "Nearby ender chest search radius (blocks)",
-	"luipy-utils-mod.config.show_toasts": "Show chat hint when remote open is not possible",
+	"luipy-utils-mod.config.try_vanilla_ender": "On vanilla servers (no mod): after inventory, try opening nearest ender chest block",
+	"luipy-utils-mod.config.show_toasts": "Show chat hint when combined view is not possible and no vanilla fallback ran",
 	"luipy-utils-mod.screen.inventory_with_ender": "Inventory & Ender Chest",
 	"luipy-utils-mod.message.combined_requires_mod_on_server": "Inventory + ender chest together needs this mod on the server (or singleplayer with the mod)."
 }

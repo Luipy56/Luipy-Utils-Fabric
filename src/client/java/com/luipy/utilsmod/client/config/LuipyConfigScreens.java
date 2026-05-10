@@ -52,6 +52,11 @@ public final class LuipyConfigScreens {
 			.setSaveConsumer(v -> cfg.nearbySearchRadiusBlocks = v)
 			.build());
 
+		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.try_vanilla_ender"), cfg.tryOpenNearestEnderOnVanillaServer)
+			.setDefaultValue(true)
+			.setSaveConsumer(v -> cfg.tryOpenNearestEnderOnVanillaServer = v)
+			.build());
+
 		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.show_toasts"), cfg.showToastsOnFailure)
 			.setDefaultValue(true)
 			.setSaveConsumer(v -> cfg.showToastsOnFailure = v)

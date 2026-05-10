@@ -1,11 +1,13 @@
 package com.luipy.utilsmod.ender;
 
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 
 public final class EnderGateEvaluation {
 	private EnderGateEvaluation() {
@@ -20,13 +22,18 @@ public final class EnderGateEvaluation {
 		return false;
 	}
 
-	public static boolean hasLoadedEnderChestNearby(Player player, Level level, int radius) {
+	/**
+	 * Nearest loaded ender chest block within Chebyshev radius of the player's feet, or empty if none.
+	 */
+	public static Optional<BlockPos> findNearestLoadedEnderChest(Player player, Level level, int radius) {
 		if (radius <= 0) {
-			return false;
+			return Optional.empty();
 		}
 		int r = Math.min(radius, 128);
 		BlockPos origin = player.blockPosition();
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		BlockPos best = null;
+		double bestDistSq = Double.MAX_VALUE;
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dy = -r; dy <= r; dy++) {
 				for (int dz = -r; dz <= r; dz++) {
@@ -34,13 +41,22 @@ public final class EnderGateEvaluation {
 					if (!level.hasChunkAt(pos)) {
 						continue;
 					}
-					if (level.getBlockState(pos).is(Blocks.ENDER_CHEST)) {
-						return true;
+					if (!level.getBlockState(pos).is(Blocks.ENDER_CHEST)) {
+						continue;
+					}
+					double dSq = player.distanceToSqr(Vec3.atCenterOf(pos));
+					if (dSq < bestDistSq) {
+						bestDistSq = dSq;
+						best = pos.immutable();
 					}
 				}
 			}
 		}
-		return false;
+		return Optional.ofNullable(best);
+	}
+
+	public static boolean hasLoadedEnderChestNearby(Player player, Level level, int radius) {
+		return findNearestLoadedEnderChest(player, level, radius).isPresent();
 	}
 
 	public static boolean passesGate(LuipyUtilsConfig cfg, Player player, Level level) {

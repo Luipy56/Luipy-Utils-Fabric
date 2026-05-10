@@ -45,12 +45,16 @@ public final class LuipyInventoryKeyHandler {
 			return;
 		}
 
-		if (cfg.showToastsOnFailure && client.player != null) {
+		client.setScreen(screen);
+		boolean willTryVanillaEnder = cfg.tryOpenNearestEnderOnVanillaServer
+			&& EnderGateEvaluation.hasLoadedEnderChestNearby(client.player, client.level, cfg.nearbySearchRadiusBlocks);
+		if (willTryVanillaEnder) {
+			client.execute(() -> LuipyVanillaServerEnderFallback.tryUseNearestEnderChest(client, cfg.nearbySearchRadiusBlocks));
+		} else if (cfg.showToastsOnFailure && client.player != null) {
 			client.player.displayClientMessage(
 				Component.translatable("luipy-utils-mod.message.combined_requires_mod_on_server"),
 				false
 			);
 		}
-		client.setScreen(screen);
 	}
 }
