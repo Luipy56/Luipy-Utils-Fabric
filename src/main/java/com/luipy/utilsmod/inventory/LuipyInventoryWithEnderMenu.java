@@ -19,7 +19,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 /**
@@ -77,9 +76,10 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 			final EquipmentSlot equipmentSlot = ARMOR_GUI_ORDER[i];
 			addSlot(new Slot(inventory, 39 - i, 8, 8 + i * 18 + S) {
 				@Override
-				public void setByPlayer(ItemStack next, ItemStack prev) {
-					owner.onEquipItem(equipmentSlot, next, prev);
-					super.setByPlayer(next, prev);
+				public void setByPlayer(ItemStack stack) {
+					ItemStack prev = getItem();
+					owner.onEquipItem(equipmentSlot, stack, prev);
+					super.setByPlayer(stack);
 				}
 
 				@Override
@@ -169,7 +169,7 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 				}
 			}
 			if (moved.isEmpty()) {
-				slot.setByPlayer(ItemStack.EMPTY, ret);
+				slot.setByPlayer(ItemStack.EMPTY);
 			} else {
 				slot.setChanged();
 			}
@@ -201,8 +201,8 @@ public class LuipyInventoryWithEnderMenu extends RecipeBookMenu<CraftingContaine
 	}
 
 	@Override
-	public boolean recipeMatches(RecipeHolder<? extends Recipe<CraftingContainer>> recipe) {
-		return recipe.value().matches(craftSlots, owner.level());
+	public boolean recipeMatches(Recipe<? super CraftingContainer> recipe) {
+		return recipe.matches(craftSlots, owner.level());
 	}
 
 	@Override

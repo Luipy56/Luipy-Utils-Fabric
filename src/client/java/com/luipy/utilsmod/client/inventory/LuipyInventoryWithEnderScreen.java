@@ -17,6 +17,8 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 	/** Same threshold as {@link InventoryScreen} for recipe-book-only layout. */
 	private static final int RECIPE_BOOK_NARROW_WIDTH = 379;
 	private static final ResourceLocation GENERIC_54 = new ResourceLocation("textures/gui/container/generic_54.png");
+	/** 1.20.1 recipe-book toggle atlas (pre-{@code WidgetSprites} API). */
+	private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation("textures/gui/recipe_button.png");
 
 	private final RecipeBookComponent recipeBookComponent = new RecipeBookComponent();
 	private boolean widthTooNarrow;
@@ -48,7 +50,10 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 				this.recipeBookButtonY(),
 				20,
 				18,
-				RecipeBookComponent.RECIPE_BUTTON_SPRITES,
+				0,
+				0,
+				19,
+				RECIPE_BUTTON_TEXTURE,
 				btn -> {
 					this.recipeBookComponent.toggleVisibility();
 					this.leftPos = this.recipeBookComponent.updateScreenPosition(this.width, this.imageWidth);
@@ -70,7 +75,7 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 		if (this.recipeBookComponent.isVisible() && this.widthTooNarrow) {
-			this.renderBackground(graphics, mouseX, mouseY, partialTick);
+			this.renderBackground(graphics);
 			this.recipeBookComponent.render(graphics, mouseX, mouseY, partialTick);
 		} else {
 			super.render(graphics, mouseX, mouseY, partialTick);
@@ -92,16 +97,14 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 		graphics.blit(GENERIC_54, x, y, 0, 0, this.imageWidth, enderH, 256, 256);
 		graphics.blit(INVENTORY_LOCATION, x, y + invShift, 0, 0, this.imageWidth, 166, 256, 256);
 		if (this.minecraft != null && this.minecraft.player != null) {
+			int invTop = y + invShift;
 			InventoryScreen.renderEntityInInventoryFollowsMouse(
 				graphics,
-				x + 26,
-				y + 8 + invShift,
-				x + 75,
-				y + 78 + invShift,
+				x + 51,
+				invTop + 75,
 				30,
-				0.0625F,
-				this.xMouse,
-				this.yMouse,
+				(float) (x + 51) - this.xMouse,
+				(float) (invTop + 75 - 50) - this.yMouse,
 				this.minecraft.player
 			);
 		}
