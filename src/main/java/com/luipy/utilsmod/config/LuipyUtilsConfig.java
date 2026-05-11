@@ -18,4 +18,10 @@ public final class LuipyUtilsConfig {
 	/** When {@link #alwaysAllowVirtualOpen} is false: require a loaded ender chest block nearby (OR with item). */
 	public boolean requireNearbyEnderChestBlock = true;
 	public boolean showToastsOnFailure = true;
+	/** When true, hovering an enchantment table option shows ALL enchantments that will be applied. */
+	public boolean showEnchantmentPreview = true;
+	/** When true, shift+right-clicking a shulker box in your inventory opens it as a container. */
+	public boolean allowOpenShulkerFromInventory = true;
+	/** When true, the combined inventory screen also shows a 3x3 crafting table panel. */
+	public boolean showCraftingTableWithInventory = false;
 }

@@ -7,6 +7,11 @@
 	"luipy-utils-mod.config.require_item": "Condición: requerir ítem de Cofre de Ender",
 	"luipy-utils-mod.config.require_block": "Condición: requerir bloque de cofre de Ender cercano",
 	"luipy-utils-mod.config.show_toasts": "Mostrar registro en el chat",
+	"luipy-utils-mod.config.enchantment_preview": "Mesa de encantamientos: mostrar preview completo",
+	"luipy-utils-mod.config.open_shulker_from_inventory": "Abrir shulker desde inventario (Shift+Click derecho)",
+	"luipy-utils-mod.config.show_crafting_table_with_inventory": "Mostrar panel de mesa de crafteo en inventario",
 	"luipy-utils-mod.screen.inventory_with_ender": "Inventario y cofre de Ender",
+	"luipy-utils-mod.screen.shulker_virtual": "Cofre Shulker",
+	"luipy-utils-mod.enchantment.preview.header": "Encantamientos:",
 	"luipy-utils-mod.message.combined_requires_mod_on_server": "Inventario + cofre de ender a la vez requiere este mod en el servidor (o un mundo local con el mod)."
 }

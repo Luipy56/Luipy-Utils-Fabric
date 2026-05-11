@@ -17,6 +17,7 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 	/** Same threshold as {@link InventoryScreen} for recipe-book-only layout. */
 	private static final int RECIPE_BOOK_NARROW_WIDTH = 379;
 	private static final ResourceLocation GENERIC_54 = new ResourceLocation("textures/gui/container/generic_54.png");
+	private static final ResourceLocation CRAFTING_TABLE = new ResourceLocation("textures/gui/container/crafting_table.png");
 	/** 1.20.1 recipe-book toggle atlas (pre-{@code WidgetSprites} API). */
 	private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation("textures/gui/recipe_button.png");
 
@@ -29,7 +30,7 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 	public LuipyInventoryWithEnderScreen(LuipyInventoryWithEnderMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, title);
 		this.imageWidth = 176;
-		this.imageHeight = LuipyInventoryWithEnderMenu.INV_Y_SHIFT + 166;
+		this.imageHeight = menu.invYShift + 166;
 		this.inventoryLabelY = this.imageHeight - 94;
 	}
 
@@ -93,9 +94,20 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 		int x = this.leftPos;
 		int y = this.topPos;
 		int enderH = LuipyInventoryWithEnderMenu.TOP_PANEL_HEIGHT;
-		int invShift = LuipyInventoryWithEnderMenu.INV_Y_SHIFT;
+		int invShift = this.menu.invYShift;
+
+		// Ender panel (top)
 		graphics.blit(GENERIC_54, x, y, 0, 0, this.imageWidth, enderH, 256, 256);
+
+		// Optional crafting table panel (middle)
+		if (this.menu.withCraftingTable) {
+			graphics.blit(CRAFTING_TABLE, x, y + enderH, 0, 0,
+				this.imageWidth, LuipyInventoryWithEnderMenu.CRAFTING_TABLE_PANEL_HEIGHT, 256, 256);
+		}
+
+		// Player inventory (bottom)
 		graphics.blit(INVENTORY_LOCATION, x, y + invShift, 0, 0, this.imageWidth, 166, 256, 256);
+
 		if (this.minecraft != null && this.minecraft.player != null) {
 			int invTop = y + invShift;
 			InventoryScreen.renderEntityInInventoryFollowsMouse(
@@ -167,9 +179,9 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 
 	/**
 	 * Vanilla uses {@code height/2 - 22}; the survival+crafting band is shifted down by half the extra
-	 * height above it ({@link LuipyInventoryWithEnderMenu#INV_Y_SHIFT}), so the toggle is moved by the same amount.
+	 * height above it, so the toggle is moved by the same amount.
 	 */
 	private int recipeBookButtonY() {
-		return this.height / 2 - 22 + LuipyInventoryWithEnderMenu.INV_Y_SHIFT / 2;
+		return this.height / 2 - 22 + this.menu.invYShift / 2;
 	}
 }

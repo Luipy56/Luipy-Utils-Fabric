@@ -50,6 +50,21 @@ public final class LuipyConfigScreens {
 			.setSaveConsumer(v -> cfg.showToastsOnFailure = v)
 			.build());
 
+		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.enchantment_preview"), cfg.showEnchantmentPreview)
+			.setDefaultValue(true)
+			.setSaveConsumer(v -> cfg.showEnchantmentPreview = v)
+			.build());
+
+		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.open_shulker_from_inventory"), cfg.allowOpenShulkerFromInventory)
+			.setDefaultValue(true)
+			.setSaveConsumer(v -> cfg.allowOpenShulkerFromInventory = v)
+			.build());
+
+		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.show_crafting_table_with_inventory"), cfg.showCraftingTableWithInventory)
+			.setDefaultValue(false)
+			.setSaveConsumer(v -> cfg.showCraftingTableWithInventory = v)
+			.build());
+
 		builder.setSavingRunnable(LuipyUtilsConfigManager::save);
 		return builder.build();
 	}

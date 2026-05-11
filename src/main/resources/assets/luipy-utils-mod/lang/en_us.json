@@ -7,6 +7,11 @@
 	"luipy-utils-mod.config.require_item": "Gate: require ender chest item",
 	"luipy-utils-mod.config.require_block": "Gate: require nearby Ender Chest block",
 	"luipy-utils-mod.config.show_toasts": "Show chat log",
+	"luipy-utils-mod.config.enchantment_preview": "Enchantment table: show full preview",
+	"luipy-utils-mod.config.open_shulker_from_inventory": "Open shulker from inventory (Shift+RClick)",
+	"luipy-utils-mod.config.show_crafting_table_with_inventory": "Show Crafting Table panel in inventory",
 	"luipy-utils-mod.screen.inventory_with_ender": "Inventory & Ender Chest",
+	"luipy-utils-mod.screen.shulker_virtual": "Shulker Box",
+	"luipy-utils-mod.enchantment.preview.header": "Enchantments:",
 	"luipy-utils-mod.message.combined_requires_mod_on_server": "Inventory + ender chest together needs this mod on the server (or singleplayer with the mod)."
 }

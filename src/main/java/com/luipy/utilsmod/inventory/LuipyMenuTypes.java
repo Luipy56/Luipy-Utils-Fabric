@@ -8,6 +8,7 @@ import net.minecraft.world.inventory.MenuType;
 
 public final class LuipyMenuTypes {
 	public static MenuType<LuipyInventoryWithEnderMenu> INVENTORY_WITH_ENDER;
+	public static MenuType<LuipyShulkerMenu> SHULKER_VIRTUAL;
 
 	private LuipyMenuTypes() {
 	}
@@ -17,6 +18,11 @@ public final class LuipyMenuTypes {
 			BuiltInRegistries.MENU,
 			LuipyUtilsMod.id("inventory_with_ender"),
 			new MenuType<>(LuipyInventoryWithEnderMenu::new, FeatureFlags.DEFAULT_FLAGS)
+		);
+		SHULKER_VIRTUAL = Registry.register(
+			BuiltInRegistries.MENU,
+			LuipyUtilsMod.id("shulker_virtual"),
+			new MenuType<>(LuipyShulkerMenu::new, FeatureFlags.DEFAULT_FLAGS)
 		);
 	}
 }

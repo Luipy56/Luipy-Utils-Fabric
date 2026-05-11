@@ -3,7 +3,10 @@
 	"package": "com.luipy.utilsmod.client.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"MinecraftMixin"
+		"MinecraftMixin",
+		"EnchantmentMenuInvoker",
+		"EnchantmentScreenMixin",
+		"ShulkerOpenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
