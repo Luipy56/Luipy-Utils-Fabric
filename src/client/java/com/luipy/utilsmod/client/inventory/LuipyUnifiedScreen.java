@@ -1,10 +1,9 @@
 package com.luipy.utilsmod.client.inventory;
 
-import com.luipy.utilsmod.inventory.LuipyInventoryWithEnderMenu;
+import com.luipy.utilsmod.inventory.LuipyUnifiedMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
 import net.minecraft.network.chat.Component;
@@ -13,41 +12,45 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 
-public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScreen<LuipyInventoryWithEnderMenu> implements RecipeUpdateListener {
-	/** Same threshold as {@link InventoryScreen} for recipe-book-only layout. */
+/**
+ * Client screen for {@link LuipyUnifiedMenu}. Blit coordinates match menu slot positions 1:1.
+ */
+public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnifiedMenu> implements RecipeUpdateListener {
 	private static final int RECIPE_BOOK_NARROW_WIDTH = 379;
 	private static final ResourceLocation GENERIC_54 = new ResourceLocation("textures/gui/container/generic_54.png");
 	private static final ResourceLocation CRAFTING_TABLE = new ResourceLocation("textures/gui/container/crafting_table.png");
-	/** 1.20.1 recipe-book toggle atlas (pre-{@code WidgetSprites} API). */
 	private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation("textures/gui/recipe_button.png");
 
 	private final RecipeBookComponent recipeBookComponent = new RecipeBookComponent();
 	private boolean widthTooNarrow;
 	private boolean recipeBookButtonClicked;
-	private float xMouse;
-	private float yMouse;
 
-	public LuipyInventoryWithEnderScreen(LuipyInventoryWithEnderMenu menu, Inventory inventory, Component title) {
+	public LuipyUnifiedScreen(LuipyUnifiedMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, title);
 		this.imageWidth = 176;
-		this.imageHeight = menu.invYShift + 166;
+		this.imageHeight = menu.playerSectionTop + LuipyUnifiedMenu.PLAYER_PANEL_HEIGHT;
 		this.inventoryLabelY = this.imageHeight - 94;
 	}
 
 	@Override
 	public void containerTick() {
-		this.recipeBookComponent.tick();
+		if (this.menu.withCrafting) {
+			this.recipeBookComponent.tick();
+		}
 	}
 
 	@Override
 	protected void init() {
 		super.init();
+		if (!this.menu.withCrafting) {
+			return;
+		}
 		this.widthTooNarrow = this.width < RECIPE_BOOK_NARROW_WIDTH;
 		this.recipeBookComponent.init(this.width, this.height, this.minecraft, this.widthTooNarrow, this.menu);
 		this.leftPos = this.recipeBookComponent.updateScreenPosition(this.width, this.imageWidth);
 		this.addRenderableWidget(
 			new ImageButton(
-				this.leftPos + 104,
+				this.leftPos + 5,
 				this.recipeBookButtonY(),
 				20,
 				18,
@@ -58,7 +61,7 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 				btn -> {
 					this.recipeBookComponent.toggleVisibility();
 					this.leftPos = this.recipeBookComponent.updateScreenPosition(this.width, this.imageWidth);
-					btn.setPosition(this.leftPos + 104, this.recipeBookButtonY());
+					btn.setPosition(this.leftPos + 5, this.recipeBookButtonY());
 					this.recipeBookButtonClicked = true;
 				}
 			)
@@ -69,62 +72,62 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 
 	@Override
 	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-		int titleY = 6;
-		graphics.drawString(this.font, this.title, this.titleLabelX, titleY, 4210752, false);
+		graphics.drawString(this.font, this.title, this.titleLabelX, 6, 4210752, false);
 	}
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-		if (this.recipeBookComponent.isVisible() && this.widthTooNarrow) {
-			this.renderBackground(graphics);
+		this.renderBackground(graphics);
+		if (this.menu.withCrafting && this.recipeBookComponent.isVisible() && this.widthTooNarrow) {
+			this.renderBg(graphics, partialTick, mouseX, mouseY);
 			this.recipeBookComponent.render(graphics, mouseX, mouseY, partialTick);
 		} else {
+			if (this.menu.withCrafting) {
+				this.recipeBookComponent.render(graphics, mouseX, mouseY, partialTick);
+			}
 			super.render(graphics, mouseX, mouseY, partialTick);
-			this.recipeBookComponent.render(graphics, mouseX, mouseY, partialTick);
-			this.recipeBookComponent.renderGhostRecipe(graphics, this.leftPos, this.topPos, false, partialTick);
+			if (this.menu.withCrafting) {
+				this.recipeBookComponent.renderGhostRecipe(graphics, this.leftPos, this.topPos, false, partialTick);
+			}
 		}
 		this.renderTooltip(graphics, mouseX, mouseY);
-		this.recipeBookComponent.renderTooltip(graphics, this.leftPos, this.topPos, mouseX, mouseY);
-		this.xMouse = (float) mouseX;
-		this.yMouse = (float) mouseY;
+		if (this.menu.withCrafting) {
+			this.recipeBookComponent.renderTooltip(graphics, this.leftPos, this.topPos, mouseX, mouseY);
+		}
 	}
 
 	@Override
 	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
 		int x = this.leftPos;
 		int y = this.topPos;
-		int enderH = LuipyInventoryWithEnderMenu.TOP_PANEL_HEIGHT;
-		int invShift = this.menu.invYShift;
 
-		// Ender panel (top)
-		graphics.blit(GENERIC_54, x, y, 0, 0, this.imageWidth, enderH, 256, 256);
-
-		// Optional crafting table panel (middle)
-		if (this.menu.withCraftingTable) {
-			graphics.blit(CRAFTING_TABLE, x, y + enderH, 0, 0,
-				this.imageWidth, LuipyInventoryWithEnderMenu.CRAFTING_TABLE_PANEL_HEIGHT, 256, 256);
+		if (this.menu.withEnder) {
+			graphics.blit(GENERIC_54, x, y, 0, 0, this.imageWidth, LuipyUnifiedMenu.ENDER_PANEL_HEIGHT, 256, 256);
+		}
+		if (this.menu.withCrafting) {
+			int craftY = this.menu.withEnder ? LuipyUnifiedMenu.ENDER_PANEL_HEIGHT : 0;
+			graphics.blit(CRAFTING_TABLE, x, y + craftY, 0, 0,
+				this.imageWidth, LuipyUnifiedMenu.CRAFTING_PANEL_HEIGHT, 256, 256);
 		}
 
-		// Player inventory (bottom)
-		graphics.blit(INVENTORY_LOCATION, x, y + invShift, 0, 0, this.imageWidth, 166, 256, 256);
-
-		if (this.minecraft != null && this.minecraft.player != null) {
-			int invTop = y + invShift;
-			InventoryScreen.renderEntityInInventoryFollowsMouse(
-				graphics,
-				x + 51,
-				invTop + 75,
-				30,
-				(float) (x + 51) - this.xMouse,
-				(float) (invTop + 75 - 50) - this.yMouse,
-				this.minecraft.player
-			);
-		}
+		// Compact player section: offhand, main inventory, hotbar (no armor / 2×2 crafting).
+		int playerY = y + this.menu.playerSectionTop;
+		graphics.blit(
+			INVENTORY_LOCATION,
+			x,
+			playerY,
+			0,
+			LuipyUnifiedMenu.PLAYER_TEXTURE_SRC_V,
+			this.imageWidth,
+			LuipyUnifiedMenu.PLAYER_PANEL_HEIGHT,
+			256,
+			256
+		);
 	}
 
 	@Override
 	protected boolean isHovering(int slotX, int slotY, int width, int height, double mouseX, double mouseY) {
-		if (this.widthTooNarrow && this.recipeBookComponent.isVisible()) {
+		if (this.menu.withCrafting && this.widthTooNarrow && this.recipeBookComponent.isVisible()) {
 			return false;
 		}
 		return super.isHovering(slotX, slotY, width, height, mouseX, mouseY);
@@ -132,11 +135,11 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (this.recipeBookComponent.mouseClicked(mouseX, mouseY, button)) {
+		if (this.menu.withCrafting && this.recipeBookComponent.mouseClicked(mouseX, mouseY, button)) {
 			this.setFocused(this.recipeBookComponent);
 			return true;
 		}
-		if (this.widthTooNarrow && this.recipeBookComponent.isVisible()) {
+		if (this.menu.withCrafting && this.widthTooNarrow && this.recipeBookComponent.isVisible()) {
 			return false;
 		}
 		return super.mouseClicked(mouseX, mouseY, button);
@@ -157,6 +160,9 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 			|| mouseY < (double) guiTop
 			|| mouseX >= (double) (guiLeft + this.imageWidth)
 			|| mouseY >= (double) (guiTop + this.imageHeight);
+		if (!this.menu.withCrafting) {
+			return outsideMain;
+		}
 		return outsideMain
 			&& this.recipeBookComponent.hasClickedOutside(mouseX, mouseY, guiLeft, guiTop, this.imageWidth, this.imageHeight, button);
 	}
@@ -164,12 +170,16 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 	@Override
 	protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType clickType) {
 		super.slotClicked(slot, slotId, mouseButton, clickType);
-		this.recipeBookComponent.slotClicked(slot);
+		if (this.menu.withCrafting) {
+			this.recipeBookComponent.slotClicked(slot);
+		}
 	}
 
 	@Override
 	public void recipesUpdated() {
-		this.recipeBookComponent.recipesUpdated();
+		if (this.menu.withCrafting) {
+			this.recipeBookComponent.recipesUpdated();
+		}
 	}
 
 	@Override
@@ -177,11 +187,8 @@ public class LuipyInventoryWithEnderScreen extends EffectRenderingInventoryScree
 		return this.recipeBookComponent;
 	}
 
-	/**
-	 * Vanilla uses {@code height/2 - 22}; the survival+crafting band is shifted down by half the extra
-	 * height above it, so the toggle is moved by the same amount.
-	 */
 	private int recipeBookButtonY() {
-		return this.height / 2 - 22 + this.menu.invYShift / 2;
+		int craftPanelTop = this.menu.withEnder ? LuipyUnifiedMenu.ENDER_PANEL_HEIGHT : 0;
+		return this.topPos + craftPanelTop + 17;
 	}
 }

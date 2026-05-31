@@ -8,3 +8,9 @@ classes/
 eclipse/
 .vscode/
 vanilla-test-server/
+
+# autoagents (secrets + runtime digests)
+autoagents/.env
+autoagents/.runtime/*
+!autoagents/.runtime/.gitkeep
+autoagents/**/__pycache__/

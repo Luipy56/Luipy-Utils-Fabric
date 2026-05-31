@@ -1,0 +1,36 @@
+---
+description: Cerrar siempre el cliente Minecraft tras probar con runClient
+alwaysApply: true
+---
+
+# runClient — cerrar el cliente al terminar
+
+Cuando lances el cliente para validar cambios del mod, **ciérralo siempre** al acabar el test. No des por cerrada una tarea de prueba con el juego aún abierto.
+
+## Cuándo aplica
+
+- Tras `./gradlew runClient` (o variantes Loom equivalentes).
+- Tras cualquier prueba manual in-game pedida en autoagents o en la conversación.
+
+## Flujo
+
+1. **Antes:** compila si hace falta (`./gradlew build`) y lanza el cliente solo cuando el test lo requiera.
+2. **Durante:** reproduce los pasos del test (inventario, menús, config, etc.).
+3. **Después (obligatorio):** cierra el cliente **antes** de reportar éxito o seguir con otro comando Gradle.
+
+## Cómo cerrar
+
+```bash
+# Preferido: salir desde el juego (Esc → Save and Quit / Disconnect)
+
+# Si el agente lanzó runClient en background y sigue vivo:
+pkill -f 'net.fabricmc.devlaunchinjector.Main' 2>/dev/null || true
+# o termina el job/shell de runClient que iniciaste
+```
+
+## No hacer
+
+- Dejar `runClient` en segundo plano al finalizar el turno.
+- Arrancar otro `./gradlew build` / `./gradlew runClient` sin haber cerrado el cliente anterior (bloqueos, Gradle daemon ocupado, falsos positivos).
+
+Si el test quedó a medias por un crash, cierra o mata el proceso igualmente y documenta el fallo.

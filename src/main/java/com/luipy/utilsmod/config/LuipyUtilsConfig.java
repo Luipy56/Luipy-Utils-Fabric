@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 @SuppressWarnings("CanBeFinal")
 public final class LuipyUtilsConfig {
 	public boolean masterEnabled = true;
-	/** When true, pressing inventory (E) opens survival inventory and ender chest together (requires mod on server). */
+	/** When true, the unified menu (Alt+L) includes a 3×9 ender chest panel (requires mod on server). */
 	@SerializedName(value = "showEnderChestWithInventory", alternate = { "replaceInventoryWithEnderChest" })
 	public boolean showEnderChestWithInventory = true;
 	/** When true, item/block gates below are ignored for opening (server still validates). */
@@ -22,6 +22,10 @@ public final class LuipyUtilsConfig {
 	public boolean showEnchantmentPreview = true;
 	/** When true, shift+right-clicking a shulker box in your inventory opens it as a container. */
 	public boolean allowOpenShulkerFromInventory = true;
-	/** When true, the combined inventory screen also shows a 3x3 crafting table panel. */
+	/** When true, the unified menu (Alt+L) includes a 3×3 crafting table panel. */
 	public boolean showCraftingTableWithInventory = false;
+	/** When true, matching blocks from {@link #blockHighlightIds} are outlined in the world (client-only). */
+	public boolean blockHighlightEnabled = false;
+	/** Comma+space separated block resource ids, e.g. {@code redstone_ore, gravel, calcite}. */
+	public String blockHighlightIds = "";
 }

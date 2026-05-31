@@ -1,0 +1,6 @@
+{
+	"parent": "minecraft:block/cube_all",
+	"textures": {
+		"all": "luipy-utils-mod:block/highlight_emphasis"
+	}
+}

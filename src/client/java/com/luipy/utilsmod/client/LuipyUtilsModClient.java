@@ -1,7 +1,11 @@
 package com.luipy.utilsmod.client;
 
-import com.luipy.utilsmod.client.inventory.LuipyInventoryWithEnderScreen;
+import com.luipy.utilsmod.client.config.LuipyConfigKeybinds;
+import com.luipy.utilsmod.client.config.LuipyUnifiedMenuKeybinds;
+import com.luipy.utilsmod.client.highlight.BlockHighlightManager;
+import com.luipy.utilsmod.client.highlight.BlockHighlightModelPlugin;
 import com.luipy.utilsmod.client.inventory.LuipyShulkerScreen;
+import com.luipy.utilsmod.client.inventory.LuipyUnifiedScreen;
 import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
 import com.luipy.utilsmod.inventory.LuipyMenuTypes;
 import com.luipy.utilsmod.network.LuipyNetworking;
@@ -14,7 +18,11 @@ public class LuipyUtilsModClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		LuipyUtilsConfigManager.load();
-		MenuScreens.register(LuipyMenuTypes.INVENTORY_WITH_ENDER, LuipyInventoryWithEnderScreen::new);
+		LuipyConfigKeybinds.register();
+		LuipyUnifiedMenuKeybinds.register();
+		BlockHighlightModelPlugin.register();
+		BlockHighlightManager.register();
+		MenuScreens.register(LuipyMenuTypes.UNIFIED, LuipyUnifiedScreen::new);
 		MenuScreens.register(LuipyMenuTypes.SHULKER_VIRTUAL, LuipyShulkerScreen::new);
 		ClientPlayNetworking.registerGlobalReceiver(LuipyNetworking.S2C_SERVER_PRESENT, (client, handler, buf, responseSender) ->
 			client.execute(() -> LuipyClientState.setServerHasLuipyMod(true))

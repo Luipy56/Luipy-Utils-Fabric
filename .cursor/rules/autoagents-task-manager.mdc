@@ -1,0 +1,38 @@
+---
+description: Task manager autoagents — pipeline de tareas y scripts del repo
+alwaysApply: true
+---
+
+# Task manager (`autoagents/`)
+
+Este repositorio incluye el **task manager autoagents** (origen: `/home/luipy/autoagents`), adaptado para **Luipy-Utils-McMod**.
+
+## Ubicación
+
+| Ruta | Uso |
+|------|-----|
+| `autoagents/` | Orquestador, prompts de agentes, cola de tareas |
+| `autoagents/tasks/` | Tareas activas (`FEAT-`, `WIP-`, `UNTESTED-`, etc.) |
+| `autoagents/tasks/done/` | Archivo por fecha (`YYYY/MM/DD/`) |
+| `autoagents/TASKS-README.md` | Convenciones de nombres y flujo |
+| `docs/agent-loop.md` | Roles del loop y labels de GitHub |
+| `scripts/` | `git-sync-main.sh`, `move-agent-task-to-done.sh`, `bump-patch-version.sh`, `setup-autoagents-gh.sh` |
+
+## Arranque
+
+```bash
+cp autoagents/.env.example autoagents/.env   # GH_TOKEN, AGENT_GH_REPO, etc.
+./scripts/setup-autoagents-gh.sh             # opcional: auth gh
+./autoagents/autoagents-loop.sh              # ciclo completo
+./autoagents/autoagents-loop.sh feat         # un solo paso
+```
+
+Repo GitHub por defecto: **`Luipy56/Luipy-Utils-McMod`**. Bump de versión del mod: **`./scripts/bump-patch-version.sh`** → `mod_version` en `gradle.properties`.
+
+## Al trabajar con tareas
+
+- Sincronizar antes de renombrar: **`./scripts/git-sync-main.sh`**
+- No editar tareas en **`testing`** / **`closed`** salvo el rol correspondiente
+- Archivar **`CLOSED-*.md`**: **`./scripts/move-agent-task-to-done.sh`**
+
+No commitear **`autoagents/.env`** ni contenido de **`autoagents/.runtime/`**.
