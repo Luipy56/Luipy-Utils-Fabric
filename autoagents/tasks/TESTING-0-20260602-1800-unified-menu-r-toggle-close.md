@@ -1,0 +1,55 @@
+# Unified menu — R toggles open and close
+
+## GitHub Issue
+- **Issue:** N/A (manual UX bug)
+- **Number:** #0
+
+## Problem / goal
+
+Pressing **R** opens the unified menu, but pressing **R** again does **not** close it. The user expects **R** to act as a toggle: open when closed, close when the unified menu is already open.
+
+**Current behavior:** `LuipyUnifiedMenuKeybinds` returns early when `client.screen != null`, so R is ignored while any screen is open.
+
+**Goal:** When **R** is pressed and **`LuipyUnifiedScreen`** is the active screen, close it (same as Esc / Done). When no screen is open, keep existing open logic via **`LuipyUnifiedMenuOpener.tryOpen`**.
+
+## High-level instructions for coder
+
+### 1 — Keybind handler
+File: **`src/client/java/com/luipy/utilsmod/client/config/LuipyUnifiedMenuKeybinds.java`**
+- On R edge-detect (`rDown && !rWasDown`):
+  - If `client.screen instanceof LuipyUnifiedScreen` → `client.setScreen(null)` (or `client.player.closeContainer()` if that is the correct close path for this menu — match vanilla inventory close behavior).
+  - Else if `client.screen == null` → `LuipyUnifiedMenuOpener.tryOpen(client)` (unchanged).
+  - Else → do nothing (do not steal R from other screens).
+- Track `rWasDown` correctly in all branches (including when unified screen is open).
+
+### 2 — KeyMapping / Controls
+- Ensure the registered **`KeyMapping`** (`OPEN_UNIFIED_MENU`) still works if the user rebinds R in Controls — prefer consuming via the KeyMapping when possible, or document that toggle uses the same raw R edge-detect as today.
+- Update lang/Javadoc if the keybind description should mention toggle behavior (EN + ES).
+
+### 3 — Regression
+- **E** → vanilla inventory only (unchanged).
+- **R** with no screen → opens unified menu when gates pass.
+- **R** with unified menu open → closes unified menu.
+- **R** with config screen / chest / other GUI open → does not close those screens.
+- **X+R** config opener unchanged.
+
+Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
+
+## Testing instructions
+
+**Implementation:** `LuipyUnifiedMenuKeybinds` now handles R when `LuipyUnifiedScreen` is active (via `OPEN_UNIFIED_MENU.consumeClick()` for rebind support). Close path uses `LuipyUnifiedScreen.onClose()`. Other screens still ignore R.
+
+**mod_version:** 0.1.26
+
+1. SP survival, gates pass → press **R** → unified menu opens.
+2. Press **R** again → unified menu closes; player can move.
+3. Open vanilla inventory (**E**) → press **R** → vanilla inventory stays (no unified menu on top).
+4. Open Luipy config (**X+R**) → press **R** → config stays open.
+5. Config → Keybinds tab → unified menu row says "Opens or closes the unified menu" (EN) / "Abre o cierra el menú unificado" (ES).
+6. Options → Controls → "Toggle unified menu" binding still works if rebound.
+7. **`./gradlew build`** — pass.
+8. **`./gradlew runClient`** — client loads without crash; close client after interactive steps 1–4.
+
+## References
+- **`LuipyUnifiedMenuKeybinds.java`**, **`LuipyUnifiedMenuOpener.java`**, **`LuipyUnifiedScreen.java`**
+- Prior: **`autoagents/tasks/done/2026/06/02/CLOSED-0-20260602-1201-unified-menu-keybind-r-xr.md`**

@@ -49,8 +49,11 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 	public static final int RIGHT_COLUMN_X_OFFSET = UnifiedWorkstationLayout.LEFT_COLUMN_WIDTH;
 
 	public final List<WorkstationKind> enabledWorkstations;
+	public static final int MAIN_BLOCK_WIDTH = 176;
+
 	public final int rightColumnX;
 	public final int leftColumnHeight;
+	public final int mainBlockHeight;
 	public final int rightColumnContentTop;
 	public final boolean withEnder;
 	public final boolean withCrafting;
@@ -88,7 +91,8 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		this.leftColumnHeight = UnifiedWorkstationLayout.leftColumnHeight(enabledWorkstations, TOP_LAYOUT_PADDING);
 
 		int rightStackHeight = (withEnder ? ENDER_PANEL_HEIGHT : 0) + (withCrafting ? CRAFTING_PANEL_HEIGHT : 0);
-		this.rightColumnContentTop = Math.max(TOP_LAYOUT_PADDING, leftColumnHeight - rightStackHeight);
+		this.mainBlockHeight = rightStackHeight + PLAYER_PANEL_HEIGHT;
+		this.rightColumnContentTop = TOP_LAYOUT_PADDING;
 		this.playerSectionTop = rightColumnContentTop + rightStackHeight;
 		this.totalContentHeight = Math.max(leftColumnHeight, playerSectionTop + PLAYER_PANEL_HEIGHT);
 
@@ -396,6 +400,11 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		}
 		slot.onTake(player, moved);
 		return ret;
+	}
+
+	public boolean isWorkstationSlot(Slot slot) {
+		int index = slots.indexOf(slot);
+		return index >= 0 && isWorkstationIndex(index);
 	}
 
 	private boolean isWorkstationIndex(int index) {

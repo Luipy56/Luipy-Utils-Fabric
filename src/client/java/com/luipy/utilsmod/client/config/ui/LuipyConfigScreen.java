@@ -11,8 +11,8 @@ import java.util.List;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -31,10 +31,11 @@ public class LuipyConfigScreen extends Screen {
 	private static final int FOOTER_HEIGHT = 36;
 	private static final int TOGGLE_WIDTH = 80;
 	private static final int TEXTURE_PREVIEW_SIZE = 48;
+	private static final int RESET_ICON_SIZE = 14;
 	private static final int PROFILE_NAME_HEIGHT = 24;
 	private static final int PROFILE_CONTROLS_HEIGHT = 28;
 	private static final int PROFILE_IDS_HEIGHT = 44;
-	private static final int PROFILE_TEXTURE_HEIGHT = 78;
+	private static final int PROFILE_TEXTURE_HEIGHT = 56;
 	private static final int PROFILE_SECTION_HEIGHT =
 		PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + PROFILE_TEXTURE_HEIGHT + 8;
 
@@ -47,7 +48,7 @@ public class LuipyConfigScreen extends Screen {
 	private int contentLeft;
 	private int contentRight;
 	private int maxScroll;
-	private final List<CycleButton<Boolean>> toggleButtons = new ArrayList<>();
+	private final List<LuipyConfigOnOffToggle> toggleButtons = new ArrayList<>();
 	private final EditBox[] profileNameFields = new EditBox[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
 	private final EditBox[] profileBlockIdFields = new EditBox[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
 	private final String[] initialProfileBlockIds = new String[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
@@ -140,9 +141,15 @@ public class LuipyConfigScreen extends Screen {
 			}
 
 			boolean current = entry.getter().apply(this.config);
-			CycleButton<Boolean> toggle = CycleButton.onOffBuilder(current)
-				.displayOnlyValue()
-				.create(toggleX, y + 8, TOGGLE_WIDTH, 20, entry.label(), (btn, value) -> entry.setter().accept(this.config, value));
+			LuipyConfigOnOffToggle toggle = LuipyConfigOnOffToggle.create(
+				toggleX,
+				y + 8,
+				TOGGLE_WIDTH,
+				20,
+				current,
+				entry.label(),
+				(btn, value) -> entry.setter().accept(this.config, value)
+			);
 			this.toggleButtons.add(toggle);
 			this.addRenderableWidget(toggle);
 			y += ROW_HEIGHT;
@@ -159,9 +166,15 @@ public class LuipyConfigScreen extends Screen {
 		for (LuipyConfigBooleanEntry entry : entries) {
 			if (y + ROW_HEIGHT >= this.contentTop && y <= this.contentBottom) {
 				boolean current = entry.getter().apply(this.config);
-				CycleButton<Boolean> toggle = CycleButton.onOffBuilder(current)
-					.displayOnlyValue()
-					.create(toggleX, y + 8, TOGGLE_WIDTH, 20, entry.label(), (btn, value) -> entry.setter().accept(this.config, value));
+				LuipyConfigOnOffToggle toggle = LuipyConfigOnOffToggle.create(
+					toggleX,
+					y + 8,
+					TOGGLE_WIDTH,
+					20,
+					current,
+					entry.label(),
+					(btn, value) -> entry.setter().accept(this.config, value)
+				);
 				this.toggleButtons.add(toggle);
 				this.addRenderableWidget(toggle);
 			}
@@ -204,16 +217,15 @@ public class LuipyConfigScreen extends Screen {
 						btn -> this.selectActiveProfile(idx)
 					).bounds(this.contentLeft, controlsY, halfWidth, 20).build()
 				);
-				CycleButton<Boolean> enabledToggle = CycleButton.onOffBuilder(profile.enabled)
-					.displayOnlyValue()
-					.create(
-						this.contentRight - TOGGLE_WIDTH,
-						controlsY,
-						TOGGLE_WIDTH,
-						20,
-						Component.translatable("luipy-utils-mod.config.block_highlight.profile_enabled"),
-						(btn, value) -> this.config.blockHighlightProfiles[idx].enabled = value
-					);
+				LuipyConfigOnOffToggle enabledToggle = LuipyConfigOnOffToggle.create(
+					this.contentRight - TOGGLE_WIDTH,
+					controlsY,
+					TOGGLE_WIDTH,
+					20,
+					profile.enabled,
+					Component.translatable("luipy-utils-mod.config.block_highlight.profile_enabled"),
+					(btn, value) -> this.config.blockHighlightProfiles[idx].enabled = value
+				);
 				this.toggleButtons.add(enabledToggle);
 				this.addRenderableWidget(enabledToggle);
 			}
@@ -230,24 +242,22 @@ public class LuipyConfigScreen extends Screen {
 				);
 				idsField.setMaxLength(2048);
 				idsField.setValue(profile.blockIds != null ? profile.blockIds : "");
-				idsField.setHint(Component.translatable("luipy-utils-mod.config.block_highlight_ids.hint"));
 				this.profileBlockIdFields[profileIndex] = idsField;
 				this.addRenderableWidget(idsField);
 			}
 
-			int buttonY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + TEXTURE_PREVIEW_SIZE + 6;
-			if (buttonY + 20 >= this.contentTop && buttonY <= this.contentBottom) {
+			int previewY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 8;
+			if (previewY + RESET_ICON_SIZE >= this.contentTop && previewY <= this.contentBottom) {
 				final int idx = profileIndex;
+				int resetX = this.contentLeft + TEXTURE_PREVIEW_SIZE + 4;
 				this.addRenderableWidget(
-					Button.builder(Component.translatable("luipy-utils-mod.config.block_highlight.texture_choose"), btn ->
-						HighlightTextureFileChooser.openAsync(idx)
-					).bounds(this.contentLeft, buttonY, halfWidth, 20).build()
-				);
-				this.addRenderableWidget(
-					Button.builder(Component.translatable("luipy-utils-mod.config.block_highlight.texture_reset"), btn -> {
+					Button.builder(Component.literal("\u21BB"), btn -> {
 						HighlightEmphasisTextures.resetProfileToDefault(idx);
 						this.init();
-					}).bounds(this.contentLeft + halfWidth + 8, buttonY, halfWidth, 20).build()
+					})
+						.bounds(resetX, previewY + TEXTURE_PREVIEW_SIZE - RESET_ICON_SIZE, RESET_ICON_SIZE, RESET_ICON_SIZE)
+						.tooltip(Tooltip.create(Component.translatable("luipy-utils-mod.config.block_highlight.texture_reset")))
+						.build()
 				);
 			}
 		}
@@ -342,14 +352,14 @@ public class LuipyConfigScreen extends Screen {
 
 		graphics.drawCenteredString(this.font, this.title, this.width / 2, 4, 0xFFFFFF);
 
-		this.renderContentLabels(graphics);
+		this.renderContentLabels(graphics, mouseX, mouseY);
 
 		if (this.maxScroll > 0) {
 			this.renderScrollbar(graphics);
 		}
 	}
 
-	private void renderContentLabels(GuiGraphics graphics) {
+	private void renderContentLabels(GuiGraphics graphics, int mouseX, int mouseY) {
 		graphics.enableScissor(this.contentLeft, this.contentTop, this.contentRight, this.contentBottom);
 
 		if (this.selectedCategory == LuipyConfigCategory.WORLD) {
@@ -408,15 +418,8 @@ public class LuipyConfigScreen extends Screen {
 						textureLabelY,
 						0xFFFFFF
 					);
-					graphics.drawString(
-						this.font,
-						Component.translatable("luipy-utils-mod.config.block_highlight.texture.desc"),
-						this.contentLeft + TEXTURE_PREVIEW_SIZE + 8,
-						textureLabelY,
-						0x888888
-					);
 				}
-				this.renderProfileTexturePreview(graphics, profileIndex, sectionY);
+				this.renderProfileTexturePreview(graphics, profileIndex, sectionY, mouseX, mouseY);
 			}
 			graphics.disableScissor();
 			return;
@@ -469,6 +472,34 @@ public class LuipyConfigScreen extends Screen {
 	}
 
 	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (button == 0 && this.selectedCategory == LuipyConfigCategory.WORLD) {
+			int profileIndex = profileIndexAtPreview(mouseX, mouseY);
+			if (profileIndex >= 0) {
+				HighlightTextureFileChooser.openAsync(profileIndex);
+				return true;
+			}
+		}
+		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	private int profileIndexAtPreview(double mouseX, double mouseY) {
+		if (mouseX < this.contentLeft || mouseX > this.contentLeft + TEXTURE_PREVIEW_SIZE
+			|| mouseY < this.contentTop || mouseY > this.contentBottom) {
+			return -1;
+		}
+		int profileStartY = this.contentTop + ROW_HEIGHT - (int) this.scrollOffset;
+		for (int profileIndex = 0; profileIndex < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; profileIndex++) {
+			int sectionY = profileStartY + profileIndex * PROFILE_SECTION_HEIGHT;
+			int previewY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 8;
+			if (mouseY >= previewY && mouseY < previewY + TEXTURE_PREVIEW_SIZE) {
+				return profileIndex;
+			}
+		}
+		return -1;
+	}
+
+	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
 		if (mouseX >= this.contentLeft && mouseX <= this.contentRight
 			&& mouseY >= this.contentTop && mouseY <= this.contentBottom) {
@@ -491,21 +522,23 @@ public class LuipyConfigScreen extends Screen {
 		}
 	}
 
-	private void renderProfileTexturePreview(GuiGraphics graphics, int profileIndex, int sectionY) {
+	private void renderProfileTexturePreview(GuiGraphics graphics, int profileIndex, int sectionY, int mouseX, int mouseY) {
 		int previewX = this.contentLeft;
 		int previewY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 8;
 		if (previewY + TEXTURE_PREVIEW_SIZE < this.contentTop || previewY > this.contentBottom) {
 			return;
 		}
-		if (HighlightEmphasisTextures.profilePreviewTexture(profileIndex) == null) {
-			return;
-		}
-		graphics.fill(previewX - 1, previewY - 1, previewX + TEXTURE_PREVIEW_SIZE + 1, previewY + TEXTURE_PREVIEW_SIZE + 1, 0xFF303030);
 		ResourceLocation textureId = HighlightEmphasisTextures.profilePreviewTextureId(profileIndex);
-		int texWidth = HighlightEmphasisTextures.profilePreviewTexture(profileIndex).getPixels().getWidth();
-		int texHeight = HighlightEmphasisTextures.profilePreviewTexture(profileIndex).getPixels().getHeight();
+		var dynamicTexture = HighlightEmphasisTextures.profilePreviewTexture(profileIndex);
+		int texWidth = dynamicTexture != null ? dynamicTexture.getPixels().getWidth() : 16;
+		int texHeight = dynamicTexture != null ? dynamicTexture.getPixels().getHeight() : 16;
+
+		boolean hovered = mouseX >= previewX && mouseX < previewX + TEXTURE_PREVIEW_SIZE
+			&& mouseY >= previewY && mouseY < previewY + TEXTURE_PREVIEW_SIZE;
+		int borderColor = hovered ? 0xFFAAAAAA : 0xFF303030;
+		graphics.fill(previewX - 1, previewY - 1, previewX + TEXTURE_PREVIEW_SIZE + 1, previewY + TEXTURE_PREVIEW_SIZE + 1, borderColor);
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.setShaderTexture(0, textureId);
-		graphics.blit(textureId, previewX, previewY, 0, 0, TEXTURE_PREVIEW_SIZE, TEXTURE_PREVIEW_SIZE, texWidth, texHeight);
+		graphics.blit(textureId, previewX, previewY, 0, 0, texWidth, texHeight, TEXTURE_PREVIEW_SIZE, TEXTURE_PREVIEW_SIZE, texWidth, texHeight);
 	}
 }

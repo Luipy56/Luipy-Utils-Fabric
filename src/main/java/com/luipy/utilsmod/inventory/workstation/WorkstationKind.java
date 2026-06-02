@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 public enum WorkstationKind {
 	ANVIL(
 		Blocks.ANVIL,
-		166,
+		84,
 		cfg -> cfg.showAnvilWithInventory,
 		cfg -> cfg.anvilAlwaysAvailable,
 		cfg -> cfg.anvilRequireNearbyBlock,
@@ -23,7 +23,7 @@ public enum WorkstationKind {
 	),
 	SMITHING(
 		Blocks.SMITHING_TABLE,
-		166,
+		84,
 		cfg -> cfg.showSmithingTableWithInventory,
 		cfg -> cfg.smithingTableAlwaysAvailable,
 		cfg -> cfg.smithingTableRequireNearbyBlock,
@@ -33,7 +33,7 @@ public enum WorkstationKind {
 	),
 	CARTOGRAPHY(
 		Blocks.CARTOGRAPHY_TABLE,
-		166,
+		84,
 		cfg -> cfg.showCartographyTableWithInventory,
 		cfg -> cfg.cartographyTableAlwaysAvailable,
 		cfg -> cfg.cartographyTableRequireNearbyBlock,
@@ -53,7 +53,7 @@ public enum WorkstationKind {
 	),
 	STONECUTTER(
 		Blocks.STONECUTTER,
-		166,
+		84,
 		cfg -> cfg.showStonecutterWithInventory,
 		cfg -> cfg.stonecutterAlwaysAvailable,
 		cfg -> cfg.stonecutterRequireNearbyBlock,
@@ -63,7 +63,7 @@ public enum WorkstationKind {
 	),
 	LOOM(
 		Blocks.LOOM,
-		166,
+		84,
 		cfg -> cfg.showLoomWithInventory,
 		cfg -> cfg.loomAlwaysAvailable,
 		cfg -> cfg.loomRequireNearbyBlock,

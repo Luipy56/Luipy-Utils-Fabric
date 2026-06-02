@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
@@ -22,7 +23,6 @@ import net.minecraft.world.inventory.Slot;
  */
 public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnifiedMenu> implements RecipeUpdateListener {
 	private static final int RECIPE_BOOK_NARROW_WIDTH = 379 + UnifiedWorkstationLayout.LEFT_COLUMN_WIDTH;
-	private static final int MAX_VISIBLE_HEIGHT = 240;
 
 	private static final ResourceLocation GENERIC_54 = new ResourceLocation("textures/gui/container/generic_54.png");
 	private static final ResourceLocation CRAFTING_TABLE = new ResourceLocation("textures/gui/container/crafting_table.png");
@@ -39,13 +39,13 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 	private final Map<WorkstationKind, UnifiedLoomWidget> loomWidgets = new EnumMap<>(WorkstationKind.class);
 	private boolean widthTooNarrow;
 	private boolean recipeBookButtonClicked;
-	private double scrollOffset;
+	private double workstationScrollOffset;
 
 	public LuipyUnifiedScreen(LuipyUnifiedMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, title);
-		this.imageWidth = this.menu.rightColumnX + 176;
+		this.imageWidth = this.menu.rightColumnX + LuipyUnifiedMenu.MAIN_BLOCK_WIDTH;
 		this.imageHeight = menu.totalContentHeight;
-		this.inventoryLabelY = this.imageHeight - 94;
+		this.inventoryLabelY = this.menu.playerSectionTop + LuipyUnifiedMenu.PLAYER_MAIN_Y - 17;
 		if (menu.workstationHost.stonecutter() != null) {
 			var widget = new UnifiedStonecutterWidget();
 			menu.workstationHost.stonecutter().registerUpdateListener(() -> widget.containerChanged(menu.workstationHost.stonecutter()));
@@ -67,14 +67,15 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 
 	@Override
 	protected void init() {
-		super.init();
-		clampScroll();
+		this.leftPos = computeBaseLeftPos();
+		this.topPos = computeBaseTopPos();
+		clampWorkstationScroll();
 		if (!this.menu.withCrafting) {
 			return;
 		}
 		this.widthTooNarrow = this.width < RECIPE_BOOK_NARROW_WIDTH;
 		this.recipeBookComponent.init(this.width, this.height, this.minecraft, this.widthTooNarrow, this.menu);
-		this.leftPos = this.recipeBookComponent.updateScreenPosition(this.width, this.imageWidth);
+		this.leftPos = applyRecipeBookShift(this.leftPos);
 		this.addRenderableWidget(
 			new ImageButton(
 				this.leftPos + this.menu.rightColumnX + 5,
@@ -87,7 +88,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 				RECIPE_BUTTON_TEXTURE,
 				btn -> {
 					this.recipeBookComponent.toggleVisibility();
-					this.leftPos = this.recipeBookComponent.updateScreenPosition(this.width, this.imageWidth);
+					this.leftPos = applyRecipeBookShift(computeBaseLeftPos());
 					btn.setPosition(this.leftPos + this.menu.rightColumnX + 5, this.recipeBookButtonY());
 					this.recipeBookButtonClicked = true;
 				}
@@ -99,44 +100,44 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 
 	@Override
 	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-		graphics.drawString(this.font, this.title, this.titleLabelX, (int) (6 - scrollOffset), 4210752, false);
+		graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
 	}
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 		this.renderBackground(graphics);
-		double adjustedMouseY = mouseY + scrollOffset;
 		if (this.menu.withCrafting && this.recipeBookComponent.isVisible() && this.widthTooNarrow) {
-			this.renderBg(graphics, partialTick, mouseX, (int) adjustedMouseY);
+			this.renderBg(graphics, partialTick, mouseX, mouseY);
 			this.recipeBookComponent.render(graphics, mouseX, mouseY, partialTick);
 		} else {
 			if (this.menu.withCrafting) {
 				this.recipeBookComponent.render(graphics, mouseX, mouseY, partialTick);
 			}
-			super.render(graphics, mouseX, (int) adjustedMouseY, partialTick);
+			super.render(graphics, mouseX, mouseY, partialTick);
 			if (this.menu.withCrafting) {
 				this.recipeBookComponent.renderGhostRecipe(graphics, this.leftPos, this.topPos, false, partialTick);
 			}
 		}
-		renderWorkstationOverlays(graphics, mouseX, (int) adjustedMouseY);
-		this.renderTooltip(graphics, mouseX, (int) adjustedMouseY);
+		renderWorkstationOverlays(graphics, mouseX, mouseY);
+		this.renderTooltip(graphics, mouseX, mouseY);
 		if (this.menu.withCrafting) {
 			this.recipeBookComponent.renderTooltip(graphics, this.leftPos, this.topPos, mouseX, mouseY);
 		}
-		renderWorkstationTooltips(graphics, mouseX, (int) adjustedMouseY);
+		renderWorkstationTooltips(graphics, mouseX, mouseY);
 	}
 
 	@Override
 	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
 		int x = this.leftPos;
-		int y = this.topPos - (int) scrollOffset;
+		int workstationY = this.topPos - (int) workstationScrollOffset;
+		int mainY = this.topPos;
 
 		for (WorkstationKind kind : this.menu.enabledWorkstations) {
 			WorkstationPanelHost.SlotRange range = this.menu.workstationHost.slotRanges().get(kind);
 			if (range == null) {
 				continue;
 			}
-			int panelY = y + range.panelTop();
+			int panelY = workstationY + range.panelTop();
 			graphics.blit(workstationTexture(kind), x, panelY, 0, 0, 176, kind.panelHeight, 256, 256);
 		}
 
@@ -144,7 +145,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 			graphics.blit(
 				GENERIC_54,
 				x + this.menu.rightColumnX,
-				y + this.menu.rightColumnContentTop,
+				mainY + this.menu.rightColumnContentTop,
 				0,
 				0,
 				176,
@@ -158,7 +159,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 			graphics.blit(
 				CRAFTING_TABLE,
 				x + this.menu.rightColumnX,
-				y + craftY,
+				mainY + craftY,
 				0,
 				0,
 				176,
@@ -168,7 +169,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 			);
 		}
 
-		int playerY = y + this.menu.playerSectionTop;
+		int playerY = mainY + this.menu.playerSectionTop;
 		graphics.blit(
 			INVENTORY_LOCATION,
 			x + this.menu.rightColumnX,
@@ -195,7 +196,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 
 	private void renderWorkstationOverlays(GuiGraphics graphics, int mouseX, int mouseY) {
 		int x = this.leftPos;
-		int y = this.topPos - (int) scrollOffset;
+		int y = this.topPos - (int) workstationScrollOffset;
 		if (this.menu.workstationHost.stonecutter() != null) {
 			WorkstationPanelHost.SlotRange range = this.menu.workstationHost.slotRanges().get(WorkstationKind.STONECUTTER);
 			if (range != null) {
@@ -214,7 +215,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 
 	private void renderWorkstationTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
 		int x = this.leftPos;
-		int y = this.topPos - (int) scrollOffset;
+		int y = this.topPos - (int) workstationScrollOffset;
 		if (this.menu.workstationHost.stonecutter() != null) {
 			WorkstationPanelHost.SlotRange range = this.menu.workstationHost.slotRanges().get(WorkstationKind.STONECUTTER);
 			if (range != null) {
@@ -232,18 +233,8 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 	}
 
 	@Override
-	protected boolean isHovering(int slotX, int slotY, int width, int height, double mouseX, double mouseY) {
-		double adjustedMouseY = mouseY + scrollOffset;
-		if (this.menu.withCrafting && this.widthTooNarrow && this.recipeBookComponent.isVisible()) {
-			return false;
-		}
-		return super.isHovering(slotX, slotY, width, height, mouseX, adjustedMouseY);
-	}
-
-	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		double adjustedMouseY = mouseY + scrollOffset;
-		if (handleWorkstationMouseClicked(mouseX, adjustedMouseY)) {
+		if (handleWorkstationMouseClicked(mouseX, mouseY)) {
 			return true;
 		}
 		if (this.menu.withCrafting && this.recipeBookComponent.mouseClicked(mouseX, mouseY, button)) {
@@ -253,16 +244,15 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 		if (this.menu.withCrafting && this.widthTooNarrow && this.recipeBookComponent.isVisible()) {
 			return false;
 		}
-		return super.mouseClicked(mouseX, adjustedMouseY, button);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-		double adjustedMouseY = mouseY + scrollOffset;
-		if (handleWorkstationMouseDragged(adjustedMouseY)) {
+		if (handleWorkstationMouseDragged(mouseY)) {
 			return true;
 		}
-		return super.mouseDragged(mouseX, adjustedMouseY, button, dragX, dragY);
+		return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override
@@ -270,8 +260,9 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 		if (handleWorkstationMouseScrolled(delta)) {
 			return true;
 		}
-		if (maxScroll() > 0) {
-			scrollOffset = Math.max(0, Math.min(maxScroll(), scrollOffset - delta * 16));
+		double max = workstationMaxScroll();
+		if (max > 0 && (isMouseOverLeftColumn(mouseX, mouseY) || workstationScrollOffset > 0)) {
+			workstationScrollOffset = Math.max(0, Math.min(max, workstationScrollOffset - delta * 16));
 			return true;
 		}
 		return super.mouseScrolled(mouseX, mouseY, delta);
@@ -279,7 +270,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 
 	private boolean handleWorkstationMouseClicked(double mouseX, double mouseY) {
 		int x = this.leftPos;
-		int y = this.topPos;
+		int y = this.topPos - (int) workstationScrollOffset;
 		if (this.menu.workstationHost.stonecutter() != null) {
 			WorkstationPanelHost.SlotRange range = this.menu.workstationHost.slotRanges().get(WorkstationKind.STONECUTTER);
 			if (range != null && stonecutterWidgets.get(WorkstationKind.STONECUTTER)
@@ -298,7 +289,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 	}
 
 	private boolean handleWorkstationMouseDragged(double mouseY) {
-		int y = this.topPos;
+		int y = this.topPos - (int) workstationScrollOffset;
 		if (this.menu.workstationHost.stonecutter() != null) {
 			WorkstationPanelHost.SlotRange range = this.menu.workstationHost.slotRanges().get(WorkstationKind.STONECUTTER);
 			if (range != null && stonecutterWidgets.get(WorkstationKind.STONECUTTER)
@@ -336,16 +327,15 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 
 	@Override
 	protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int button) {
-		double adjustedMouseY = mouseY + scrollOffset;
 		boolean outsideMain = mouseX < (double) guiLeft
-			|| adjustedMouseY < (double) guiTop
+			|| mouseY < (double) guiTop
 			|| mouseX >= (double) (guiLeft + this.imageWidth)
-			|| adjustedMouseY >= (double) (guiTop + this.imageHeight);
+			|| mouseY >= (double) (guiTop + this.menu.mainBlockHeight);
 		if (!this.menu.withCrafting) {
 			return outsideMain;
 		}
 		return outsideMain
-			&& this.recipeBookComponent.hasClickedOutside(mouseX, mouseY, guiLeft, guiTop, this.imageWidth, this.imageHeight, button);
+			&& this.recipeBookComponent.hasClickedOutside(mouseX, mouseY, guiLeft, guiTop, this.imageWidth, this.menu.mainBlockHeight, button);
 	}
 
 	@Override
@@ -371,18 +361,71 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 	private int recipeBookButtonY() {
 		int craftPanelTop = this.menu.rightColumnContentTop
 			+ (this.menu.withEnder ? LuipyUnifiedMenu.ENDER_PANEL_HEIGHT : 0);
-		return this.topPos + craftPanelTop + 17 - (int) scrollOffset;
+		return this.topPos + craftPanelTop + 17;
 	}
 
-	private double maxScroll() {
-		return Math.max(0, this.imageHeight - MAX_VISIBLE_HEIGHT);
+	private int computeBaseLeftPos() {
+		int mainBlockLeft = (this.width - LuipyUnifiedMenu.MAIN_BLOCK_WIDTH) / 2;
+		return mainBlockLeft - this.menu.rightColumnX;
 	}
 
-	private void clampScroll() {
-		scrollOffset = Math.max(0, Math.min(maxScroll(), scrollOffset));
+	private int computeBaseTopPos() {
+		return (this.height - this.menu.mainBlockHeight) / 2 - this.menu.rightColumnContentTop;
 	}
 
-	public double luipyScrollOffset() {
-		return scrollOffset;
+	private int applyRecipeBookShift(int baseLeftPos) {
+		int recipeBookLeft = this.recipeBookComponent.updateScreenPosition(this.width, LuipyUnifiedMenu.MAIN_BLOCK_WIDTH);
+		int recipeBookOffset = recipeBookLeft - (this.width - LuipyUnifiedMenu.MAIN_BLOCK_WIDTH) / 2;
+		return baseLeftPos + recipeBookOffset;
+	}
+
+	private boolean isMouseOverLeftColumn(double mouseX, double mouseY) {
+		if (this.menu.enabledWorkstations.isEmpty()) {
+			return false;
+		}
+		int x = this.leftPos;
+		int y = this.topPos;
+		return mouseX >= x
+			&& mouseX < x + UnifiedWorkstationLayout.LEFT_COLUMN_WIDTH
+			&& mouseY >= y
+			&& mouseY < y + this.menu.mainBlockHeight;
+	}
+
+	private double workstationMaxScroll() {
+		return Math.max(0, this.menu.leftColumnHeight - this.menu.mainBlockHeight);
+	}
+
+	private void clampWorkstationScroll() {
+		workstationScrollOffset = Math.max(0, Math.min(workstationMaxScroll(), workstationScrollOffset));
+	}
+
+	public double luipyWorkstationScrollOffset() {
+		return workstationScrollOffset;
+	}
+
+	public boolean luipyIsWorkstationSlot(Slot slot) {
+		return this.menu.isWorkstationSlot(slot);
+	}
+
+	public boolean luipyIsHoveringWorkstationAdjusted(Slot slot, double mouseX, double mouseY) {
+		double adjustedY = this.menu.isWorkstationSlot(slot) ? mouseY + workstationScrollOffset : mouseY;
+		return isHovering(slot.x, slot.y, 16, 16, mouseX, adjustedY);
+	}
+
+	public void luipyRenderSlotHighlight(GuiGraphics graphics, int x, int y, int blitOffset) {
+		if (luipyIsWorkstationSlotAt(x, y)) {
+			AbstractContainerScreen.renderSlotHighlight(graphics, x, y - (int) workstationScrollOffset, blitOffset);
+		} else {
+			AbstractContainerScreen.renderSlotHighlight(graphics, x, y, blitOffset);
+		}
+	}
+
+	private boolean luipyIsWorkstationSlotAt(int x, int y) {
+		for (Slot slot : this.menu.slots) {
+			if (slot.x == x && slot.y == y && this.menu.isWorkstationSlot(slot)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

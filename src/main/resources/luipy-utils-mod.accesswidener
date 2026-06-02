@@ -19,3 +19,4 @@ accessible field net/minecraft/world/inventory/LoomMenu bannerSlot Lnet/minecraf
 accessible field net/minecraft/world/inventory/LoomMenu dyeSlot Lnet/minecraft/world/inventory/Slot;
 
 accessible method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen renderSlot (Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/inventory/Slot;)V
+accessible method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen findSlot (DD)Lnet/minecraft/world/inventory/Slot;
