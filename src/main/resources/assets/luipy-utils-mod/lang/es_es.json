@@ -56,6 +56,7 @@
 	"luipy-utils-mod.screen.unified_menu": "Menú unificado",
 	"luipy-utils-mod.screen.shulker_virtual": "Cofre Shulker",
 	"luipy-utils-mod.enchantment.preview.header": "Encantamientos:",
+	"luipy-utils-mod.message.master_disabled": "Las funciones de Luipy Utils están desactivadas — activa «Activar funciones del mod» en la config.",
 	"luipy-utils-mod.message.unified_requires_mod_on_server": "El menú unificado requiere este mod en el servidor (o un mundo local con el mod).",
 	"luipy-utils-mod.message.unified_creative": "El menú unificado no está disponible en modo Creativo.",
 	"luipy-utils-mod.message.ender_gate_no_rules": "El panel de ender está activo pero no hay reglas de acceso — activa item o bloque, o permite siempre.",

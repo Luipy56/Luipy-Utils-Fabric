@@ -56,6 +56,7 @@
 	"luipy-utils-mod.screen.unified_menu": "Unified Menu",
 	"luipy-utils-mod.screen.shulker_virtual": "Shulker Box",
 	"luipy-utils-mod.enchantment.preview.header": "Enchantments:",
+	"luipy-utils-mod.message.master_disabled": "Luipy Utils features are disabled — turn on \"Enable mod features\" in config.",
 	"luipy-utils-mod.message.unified_requires_mod_on_server": "The unified menu needs this mod on the server (or singleplayer with the mod).",
 	"luipy-utils-mod.message.unified_creative": "The unified menu is not available in Creative mode.",
 	"luipy-utils-mod.message.ender_gate_no_rules": "Ender chest panel is on but no gate rules are enabled — enable an item or block gate, or turn on always allow.",

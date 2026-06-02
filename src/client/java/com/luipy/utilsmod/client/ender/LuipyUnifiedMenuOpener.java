@@ -25,6 +25,7 @@ public final class LuipyUnifiedMenuOpener {
 		}
 		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
 		if (!cfg.masterEnabled) {
+			LuipyClientMessages.actionBlocked(client, "luipy-utils-mod.message.master_disabled");
 			return;
 		}
 		if (client.player.isCreative()) {

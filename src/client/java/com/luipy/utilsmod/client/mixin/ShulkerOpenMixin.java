@@ -5,7 +5,6 @@ import com.luipy.utilsmod.client.LuipyClientState;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
 import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
 import com.luipy.utilsmod.network.LuipyNetworking;
-import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
@@ -27,9 +26,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class ShulkerOpenMixin extends Screen {
-	private static final int GLFW_KEY_LEFT_SHIFT = 340;
-	private static final int GLFW_KEY_RIGHT_SHIFT = 344;
-
 	@Shadow protected Slot hoveredSlot;
 	@Shadow public AbstractContainerMenu menu;
 
@@ -42,17 +38,9 @@ public abstract class ShulkerOpenMixin extends Screen {
 	 * Intercepts shift+right-click on a shulker box item in a player inventory slot and opens it
 	 * as a full interactive container instead of performing vanilla quick-move.
 	 */
-	@Inject(
-		method = "mouseClicked",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;findSlot(DD)Lnet/minecraft/world/inventory/Slot;",
-			shift = At.Shift.AFTER
-		),
-		cancellable = true
-	)
+	@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
 	private void luipy$interceptShulkerOpen(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if (button != 1 || !isShiftDown()) {
+		if (button != 1 || !AbstractContainerScreen.hasShiftDown()) {
 			return;
 		}
 
@@ -99,12 +87,6 @@ public abstract class ShulkerOpenMixin extends Screen {
 		buf.writeInt(slot.index);
 		ClientPlayNetworking.send(LuipyNetworking.C2S_OPEN_SHULKER, buf);
 		cir.setReturnValue(true);
-	}
-
-	private static boolean isShiftDown() {
-		long window = Minecraft.getInstance().getWindow().getWindow();
-		return InputConstants.isKeyDown(window, GLFW_KEY_LEFT_SHIFT)
-			|| InputConstants.isKeyDown(window, GLFW_KEY_RIGHT_SHIFT);
 	}
 
 	private static boolean isPlayerInventorySlot(Slot slot) {

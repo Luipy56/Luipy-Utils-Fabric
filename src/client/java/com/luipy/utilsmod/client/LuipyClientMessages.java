@@ -23,4 +23,16 @@ public final class LuipyClientMessages {
 		}
 		client.player.displayClientMessage(Component.translatable(translationKey, args), false);
 	}
+
+	/** Logs when {@code showToastsOnFailure} is on, including when the master switch is off. */
+	public static void actionBlocked(Minecraft client, String translationKey, Object... args) {
+		if (client.player == null) {
+			return;
+		}
+		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
+		if (!cfg.showToastsOnFailure) {
+			return;
+		}
+		client.player.displayClientMessage(Component.translatable(translationKey, args), false);
+	}
 }
