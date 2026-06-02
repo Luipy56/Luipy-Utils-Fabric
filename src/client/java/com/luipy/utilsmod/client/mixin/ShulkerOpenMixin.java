@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class ShulkerOpenMixin extends Screen {
-	@Shadow protected Slot hoveredSlot;
 	@Shadow public AbstractContainerMenu menu;
 
 	@SuppressWarnings("unused")
@@ -40,7 +39,7 @@ public abstract class ShulkerOpenMixin extends Screen {
 	private void luipy$interceptShulkerOpen(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if (button != 1 || !hasShiftDown()) return;
 
-		Slot slot = hoveredSlot;
+		Slot slot = ((AbstractContainerScreenInvoker) this).luipy$findSlot(mouseX, mouseY);
 		if (slot == null || !slot.hasItem()) return;
 		if (!(slot.container instanceof Inventory)) return;
 

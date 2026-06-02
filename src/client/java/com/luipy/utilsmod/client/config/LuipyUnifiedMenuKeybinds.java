@@ -8,17 +8,18 @@ import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Default gesture: hold <strong>Alt</strong> and press <strong>L</strong> to open {@link com.luipy.utilsmod.inventory.LuipyUnifiedMenu}.
+ * Default gesture: press <strong>R</strong> to open {@link com.luipy.utilsmod.inventory.LuipyUnifiedMenu}.
+ * Plain R is unbound in vanilla 1.20.1 default controls (unlike L for swap-offhand), so no Alt chord is needed.
  * A {@link KeyMapping} is registered for discoverability in Controls; vanilla {@code E} opens stock inventory only.
  */
 public final class LuipyUnifiedMenuKeybinds {
 	public static final KeyMapping OPEN_UNIFIED_MENU = new KeyMapping(
 		"key.luipy-utils-mod.open_unified_menu",
-		GLFW.GLFW_KEY_UNKNOWN,
+		GLFW.GLFW_KEY_R,
 		LuipyConfigKeybinds.CATEGORY
 	);
 
-	private static boolean altLWasActive;
+	private static boolean rWasDown;
 
 	private LuipyUnifiedMenuKeybinds() {
 	}
@@ -30,20 +31,22 @@ public final class LuipyUnifiedMenuKeybinds {
 
 	private static void onClientTick(Minecraft client) {
 		if (client.player == null) {
-			altLWasActive = false;
+			rWasDown = false;
+			return;
+		}
+
+		if (client.screen != null) {
+			rWasDown = false;
 			return;
 		}
 
 		long window = client.getWindow().getWindow();
-		boolean altDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
-			|| GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
-		boolean lDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_L) == GLFW.GLFW_PRESS;
-		boolean altLActive = altDown && lDown;
+		boolean rDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_R) == GLFW.GLFW_PRESS;
 
-		if (altLActive && !altLWasActive) {
+		if (rDown && !rWasDown) {
 			LuipyUnifiedMenuOpener.tryOpen(client);
 		}
 
-		altLWasActive = altLActive;
+		rWasDown = rDown;
 	}
 }

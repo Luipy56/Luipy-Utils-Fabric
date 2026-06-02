@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 
 /**
- * Luipy unified menu (Alt+L): optional ender chest and crafting table panels above a compact player
+ * Luipy unified menu (R): optional ender chest and crafting table panels above a compact player
  * inventory (main 3×9, hotbar, offhand — no armor column, no 2×2 player crafting).
  *
  * <p>Slot indices are assigned top-to-bottom at construction time. Example when both optional panels
@@ -36,7 +36,8 @@ import net.minecraft.world.item.crafting.Recipe;
  *
  * <p>Layout map (screen Y from top; must match {@code LuipyUnifiedScreen.renderBg} blits 1:1):
  * <pre>
- *   Ender (optional):     slots at y = 18 + row×18; blit generic_54 (0,0) height {@link #ENDER_PANEL_HEIGHT}
+ *   Top padding:          {@link #TOP_LAYOUT_PADDING} px before first panel
+ *   Ender (optional):     slots at y = padding + 18 + row×18; blit generic_54 at padding
  *   Craft (optional):     grid y = 17 + row×18 + craftPanelTop; result y = 35 + craftPanelTop;
  *                         blit crafting_table at craftPanelTop, height {@link #CRAFTING_PANEL_HEIGHT}
  *   Player section:       blit inventory.png srcV={@link #PLAYER_TEXTURE_SRC_V}, height {@link #PLAYER_PANEL_HEIGHT}
@@ -53,6 +54,8 @@ import net.minecraft.world.item.crafting.Recipe;
  * updating {@link #quickMoveStack} ranges in one place.
  */
 public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
+	/** Extra top padding so optional panels and the player strip clear vanilla armor/craft chrome. */
+	public static final int TOP_LAYOUT_PADDING = 30;
 	public static final int ENDER_SLOT_COUNT = 27;
 	public static final int CRAFT_GRID_COUNT = 9;
 	/** Vertical space for the ender chest panel background (vanilla generic_54 header + 3 rows). */
@@ -102,7 +105,9 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		var cfg = LuipyUtilsConfigManager.get();
 		this.withEnder = cfg.showEnderChestWithInventory;
 		this.withCrafting = cfg.showCraftingTableWithInventory;
-		this.playerSectionTop = (withEnder ? ENDER_PANEL_HEIGHT : 0) + (withCrafting ? CRAFTING_PANEL_HEIGHT : 0);
+		this.playerSectionTop = TOP_LAYOUT_PADDING
+			+ (withEnder ? ENDER_PANEL_HEIGHT : 0)
+			+ (withCrafting ? CRAFTING_PANEL_HEIGHT : 0);
 
 		this.craftGrid = new TransientCraftingContainer(this, 3, 3);
 		this.craftResult = new ResultContainer();
@@ -123,7 +128,7 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 			es = idx;
 			for (int row = 0; row < 3; row++) {
 				for (int col = 0; col < 9; col++) {
-					addSlot(new Slot(enderChest, col + row * 9, 8 + col * 18, 18 + row * 18));
+					addSlot(new Slot(enderChest, col + row * 9, 8 + col * 18, TOP_LAYOUT_PADDING + 18 + row * 18));
 					idx++;
 				}
 			}
@@ -131,7 +136,7 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		}
 
 		if (withCrafting) {
-			int tableY = withEnder ? ENDER_PANEL_HEIGHT : 0;
+			int tableY = TOP_LAYOUT_PADDING + (withEnder ? ENDER_PANEL_HEIGHT : 0);
 			cgs = idx;
 			for (int row = 0; row < 3; row++) {
 				for (int col = 0; col < 3; col++) {

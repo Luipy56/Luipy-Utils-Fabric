@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 
 /**
  * First-party in-game config screen (masa-style category sidebar + scrolling option rows).
- * Open with {@link com.luipy.utilsmod.client.config.LuipyConfigKeybinds} (default: hold X + L).
+ * Open with {@link com.luipy.utilsmod.client.config.LuipyConfigKeybinds} (default: hold X + R).
  */
 public class LuipyConfigScreen extends Screen {
 	private static final int SIDEBAR_WIDTH = 130;
@@ -22,7 +22,8 @@ public class LuipyConfigScreen extends Screen {
 	private static final int ROW_HEIGHT = 40;
 	private static final int FOOTER_HEIGHT = 36;
 	private static final int TOGGLE_WIDTH = 80;
-	private static final int WORLD_EXTRA_HEIGHT = 88;
+	private static final int WORLD_EXTRA_HEIGHT = 65;
+	private static final int BLOCK_IDS_FIELD_GAP = 16;
 
 	private final Screen parent;
 	private final LuipyUtilsConfig config;
@@ -35,11 +36,14 @@ public class LuipyConfigScreen extends Screen {
 	private int maxScroll;
 	private final List<CycleButton<Boolean>> toggleButtons = new ArrayList<>();
 	private EditBox blockIdsField;
+	private final String initialBlockHighlightIds;
+	private boolean visitedWorldTab;
 
 	public LuipyConfigScreen(Screen parent) {
 		super(Component.translatable("luipy-utils-mod.config.title"));
 		this.parent = parent;
 		this.config = LuipyUtilsConfigManager.get();
+		this.initialBlockHighlightIds = normalizeBlockHighlightIds(this.config.blockHighlightIds);
 	}
 
 	public static Screen create(Screen parent) {
@@ -82,6 +86,9 @@ public class LuipyConfigScreen extends Screen {
 	}
 
 	private void selectCategory(LuipyConfigCategory category) {
+		if (category == LuipyConfigCategory.WORLD) {
+			this.visitedWorldTab = true;
+		}
 		this.selectedCategory = category;
 		this.scrollOffset = 0;
 		this.init();
@@ -135,7 +142,7 @@ public class LuipyConfigScreen extends Screen {
 			y += ROW_HEIGHT;
 		}
 
-		int fieldY = this.contentTop + ROW_HEIGHT + 12 - (int) this.scrollOffset;
+		int fieldY = this.contentTop + ROW_HEIGHT + 12 + BLOCK_IDS_FIELD_GAP + 9 - (int) this.scrollOffset;
 		int fieldWidth = this.contentRight - this.contentLeft - 8;
 		if (fieldY + 52 >= this.contentTop && fieldY <= this.contentBottom) {
 			this.blockIdsField = new EditBox(
@@ -150,14 +157,6 @@ public class LuipyConfigScreen extends Screen {
 			this.blockIdsField.setValue(this.config.blockHighlightIds);
 			this.blockIdsField.setHint(Component.translatable("luipy-utils-mod.config.block_highlight_ids.hint"));
 			this.addRenderableWidget(this.blockIdsField);
-
-			this.addRenderableWidget(
-				Button.builder(Component.translatable("luipy-utils-mod.config.block_highlight_apply"), btn -> {
-					if (this.blockIdsField != null) {
-						BlockHighlightManager.applyFromConfig(this.blockIdsField.getValue());
-					}
-				}).bounds(this.contentLeft, fieldY + 28, 160, 20).build()
-			);
 		}
 
 		int contentHeight = this.contentBottom - this.contentTop;
@@ -193,14 +192,21 @@ public class LuipyConfigScreen extends Screen {
 	}
 
 	private void saveAndClose() {
-		if (this.blockIdsField != null) {
-			this.config.blockHighlightIds = this.blockIdsField.getValue();
-			BlockHighlightManager.reloadFromConfig();
+		if (this.visitedWorldTab && this.blockIdsField != null) {
+			String current = this.blockIdsField.getValue();
+			this.config.blockHighlightIds = current;
+			if (!normalizeBlockHighlightIds(current).equals(this.initialBlockHighlightIds)) {
+				BlockHighlightManager.applyFromConfig(current);
+			}
 		}
 		LuipyUtilsConfigManager.save();
 		if (this.minecraft != null) {
 			this.minecraft.setScreen(this.parent);
 		}
+	}
+
+	private static String normalizeBlockHighlightIds(String raw) {
+		return raw == null ? "" : raw.trim();
 	}
 
 	@Override

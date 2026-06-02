@@ -9,17 +9,17 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Opens {@link LuipyConfigScreen} when the player holds <strong>both</strong> {@code X} and {@code L}.
+ * Opens {@link LuipyConfigScreen} when the player holds <strong>both</strong> {@code X} and {@code R}.
  * <p>
  * A {@link KeyMapping} is registered for discoverability in Controls (category: Luipy Utils), but the
- * actual open gesture requires both keys down at once — matching the requested {@code X+L} chord UX.
+ * actual open gesture requires both keys down at once — matching the requested {@code X+R} chord UX.
  * Rebinding via vanilla controls is not wired yet; see the Keybinds category stub in the config screen.
  */
 public final class LuipyConfigKeybinds {
 	public static final String CATEGORY = "key.categories.luipy-utils-mod";
 	public static final KeyMapping OPEN_CONFIG = new KeyMapping(
 		"key.luipy-utils-mod.open_config",
-		GLFW.GLFW_KEY_L,
+		GLFW.GLFW_KEY_R,
 		CATEGORY
 	);
 
@@ -41,8 +41,8 @@ public final class LuipyConfigKeybinds {
 
 		long window = client.getWindow().getWindow();
 		boolean xDown = org.lwjgl.glfw.GLFW.glfwGetKey(window, GLFW.GLFW_KEY_X) == GLFW.GLFW_PRESS;
-		boolean lDown = org.lwjgl.glfw.GLFW.glfwGetKey(window, GLFW.GLFW_KEY_L) == GLFW.GLFW_PRESS;
-		boolean chordActive = xDown && lDown;
+		boolean rDown = org.lwjgl.glfw.GLFW.glfwGetKey(window, GLFW.GLFW_KEY_R) == GLFW.GLFW_PRESS;
+		boolean chordActive = xDown && rDown;
 
 		if (chordActive && !chordWasActive) {
 			Screen current = client.screen;

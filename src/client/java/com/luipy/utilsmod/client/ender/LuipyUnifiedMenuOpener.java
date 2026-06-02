@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 /**
- * Opens the Luipy unified menu (Alt+L) when config and server gates allow.
+ * Opens the unified menu (R) when config and server gates allow.
  * Vanilla {@code E} is never intercepted — see {@link com.luipy.utilsmod.client.config.LuipyUnifiedMenuKeybinds}.
  */
 public final class LuipyUnifiedMenuOpener {

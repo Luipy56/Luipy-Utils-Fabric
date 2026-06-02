@@ -102,10 +102,12 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 		int y = this.topPos;
 
 		if (this.menu.withEnder) {
-			graphics.blit(GENERIC_54, x, y, 0, 0, this.imageWidth, LuipyUnifiedMenu.ENDER_PANEL_HEIGHT, 256, 256);
+			graphics.blit(GENERIC_54, x, y + LuipyUnifiedMenu.TOP_LAYOUT_PADDING, 0, 0,
+				this.imageWidth, LuipyUnifiedMenu.ENDER_PANEL_HEIGHT, 256, 256);
 		}
 		if (this.menu.withCrafting) {
-			int craftY = this.menu.withEnder ? LuipyUnifiedMenu.ENDER_PANEL_HEIGHT : 0;
+			int craftY = LuipyUnifiedMenu.TOP_LAYOUT_PADDING
+				+ (this.menu.withEnder ? LuipyUnifiedMenu.ENDER_PANEL_HEIGHT : 0);
 			graphics.blit(CRAFTING_TABLE, x, y + craftY, 0, 0,
 				this.imageWidth, LuipyUnifiedMenu.CRAFTING_PANEL_HEIGHT, 256, 256);
 		}
@@ -188,7 +190,8 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 	}
 
 	private int recipeBookButtonY() {
-		int craftPanelTop = this.menu.withEnder ? LuipyUnifiedMenu.ENDER_PANEL_HEIGHT : 0;
+		int craftPanelTop = LuipyUnifiedMenu.TOP_LAYOUT_PADDING
+			+ (this.menu.withEnder ? LuipyUnifiedMenu.ENDER_PANEL_HEIGHT : 0);
 		return this.topPos + craftPanelTop + 17;
 	}
 }
