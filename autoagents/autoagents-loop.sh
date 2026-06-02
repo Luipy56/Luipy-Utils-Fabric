@@ -14,7 +14,6 @@ sleepminutes="${AGENT_LOOP_SLEEP_MINUTES:-5}"
 sleepseconds=$((sleepminutes * 60))
 # Runtime artifacts (preflight digest, gh stderr) stay inside the repo — not /tmp.
 AGENT_LOOP_TMP="${AGENT_LOOP_TMP:-${SCRIPTDIR}/.runtime}"
-GH_REPO="${AGENT_GH_REPO:-Luipy56/Luipy-Utils-McMod}"
 GIT_BRANCH="${AGENT_GIT_BRANCH:-main}"
 LAST_REVIEW_FILE="${SCRIPTDIR}/001-gh-reviewer/time-of-last-review.txt"
 ENV_FILE="${SCRIPTDIR}/.env"
@@ -23,6 +22,8 @@ if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   set -a && source "$ENV_FILE" && set +a
 fi
+
+GH_REPO="${AGENT_GH_REPO:-Luipy56/Luipy-Utils-McMod}"
 
 cd "$SCRIPTDIR" || exit 1
 

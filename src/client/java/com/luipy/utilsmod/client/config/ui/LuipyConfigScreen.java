@@ -8,13 +8,11 @@ import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -26,18 +24,19 @@ public class LuipyConfigScreen extends Screen {
 	private static final int SIDEBAR_WIDTH = 130;
 	private static final int CONTENT_PADDING = 10;
 	private static final int ROW_HEIGHT = 40;
+	private static final int WORLD_HEADER_HEIGHT = 52;
 	private static final int ICON_SIZE = 16;
 	private static final int ICON_TEXT_GAP = 22;
 	private static final int FOOTER_HEIGHT = 36;
 	private static final int TOGGLE_WIDTH = 80;
+	private static final int ACTIVE_BUTTON_WIDTH = 72;
 	private static final int TEXTURE_PREVIEW_SIZE = 48;
 	private static final int RESET_ICON_SIZE = 14;
-	private static final int PROFILE_NAME_HEIGHT = 24;
-	private static final int PROFILE_CONTROLS_HEIGHT = 28;
-	private static final int PROFILE_IDS_HEIGHT = 44;
-	private static final int PROFILE_TEXTURE_HEIGHT = 56;
+	private static final int PROFILE_CONTROLS_HEIGHT = 24;
+	private static final int PROFILE_IDS_HEIGHT = 32;
+	private static final int PROFILE_TEXTURE_HEIGHT = 52;
 	private static final int PROFILE_SECTION_HEIGHT =
-		PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + PROFILE_TEXTURE_HEIGHT + 8;
+		PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + PROFILE_TEXTURE_HEIGHT + 8;
 
 	private final Screen parent;
 	private final LuipyUtilsConfig config;
@@ -49,7 +48,6 @@ public class LuipyConfigScreen extends Screen {
 	private int contentRight;
 	private int maxScroll;
 	private final List<LuipyConfigOnOffToggle> toggleButtons = new ArrayList<>();
-	private final EditBox[] profileNameFields = new EditBox[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
 	private final EditBox[] profileBlockIdFields = new EditBox[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
 	private final String[] initialProfileBlockIds = new String[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
 	private boolean visitedWorldTab;
@@ -79,7 +77,6 @@ public class LuipyConfigScreen extends Screen {
 	protected void init() {
 		this.toggleButtons.clear();
 		this.clearWidgets();
-		Arrays.fill(this.profileNameFields, null);
 		Arrays.fill(this.profileBlockIdFields, null);
 		this.computeContentBounds();
 		this.rebuildSidebar();
@@ -164,7 +161,7 @@ public class LuipyConfigScreen extends Screen {
 		int y = this.contentTop - (int) this.scrollOffset;
 
 		for (LuipyConfigBooleanEntry entry : entries) {
-			if (y + ROW_HEIGHT >= this.contentTop && y <= this.contentBottom) {
+			if (y + WORLD_HEADER_HEIGHT >= this.contentTop && y <= this.contentBottom) {
 				boolean current = entry.getter().apply(this.config);
 				LuipyConfigOnOffToggle toggle = LuipyConfigOnOffToggle.create(
 					toggleX,
@@ -178,47 +175,33 @@ public class LuipyConfigScreen extends Screen {
 				this.toggleButtons.add(toggle);
 				this.addRenderableWidget(toggle);
 			}
-			y += ROW_HEIGHT;
+			y += WORLD_HEADER_HEIGHT;
 		}
 
-		int profileStartY = this.contentTop + ROW_HEIGHT - (int) this.scrollOffset;
+		int profileStartY = this.contentTop + WORLD_HEADER_HEIGHT - (int) this.scrollOffset;
 		int fieldWidth = this.contentRight - this.contentLeft - 8;
-		int halfWidth = Math.max(80, (fieldWidth - 8) / 2);
+		int activeButtonX = toggleX - ACTIVE_BUTTON_WIDTH - 6;
 
 		for (int profileIndex = 0; profileIndex < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; profileIndex++) {
 			LuipyUtilsConfig.HighlightProfile profile = this.config.blockHighlightProfiles[profileIndex];
 			int sectionY = profileStartY + profileIndex * PROFILE_SECTION_HEIGHT;
 
-			int nameY = sectionY;
-			if (nameY + PROFILE_NAME_HEIGHT >= this.contentTop && nameY <= this.contentBottom) {
-				EditBox nameField = new EditBox(
-					this.font,
-					this.contentLeft,
-					nameY,
-					fieldWidth,
-					20,
-					Component.translatable("luipy-utils-mod.config.block_highlight.profile_name")
-				);
-				nameField.setMaxLength(32);
-				nameField.setValue(profile.name != null ? profile.name : "");
-				this.profileNameFields[profileIndex] = nameField;
-				this.addRenderableWidget(nameField);
-			}
-
-			int controlsY = sectionY + PROFILE_NAME_HEIGHT;
+			int controlsY = sectionY;
 			if (controlsY + PROFILE_CONTROLS_HEIGHT >= this.contentTop && controlsY <= this.contentBottom) {
 				final int idx = profileIndex;
 				boolean isActive = this.config.activeBlockHighlightProfile == profileIndex;
-				this.addRenderableWidget(
-					Button.builder(
-						isActive
-							? Component.translatable("luipy-utils-mod.config.block_highlight.profile_active")
-							: Component.translatable("luipy-utils-mod.config.block_highlight.profile_select"),
-						btn -> this.selectActiveProfile(idx)
-					).bounds(this.contentLeft, controlsY, halfWidth, 20).build()
-				);
+				Button activeButton = Button.builder(
+					isActive
+						? Component.translatable("luipy-utils-mod.config.block_highlight.profile_active")
+						: Component.translatable("luipy-utils-mod.config.block_highlight.profile_select"),
+					btn -> this.selectActiveProfile(idx)
+				).bounds(activeButtonX, controlsY, ACTIVE_BUTTON_WIDTH, 20).build();
+				if (isActive) {
+					activeButton.active = false;
+				}
+				this.addRenderableWidget(activeButton);
 				LuipyConfigOnOffToggle enabledToggle = LuipyConfigOnOffToggle.create(
-					this.contentRight - TOGGLE_WIDTH,
+					toggleX,
 					controlsY,
 					TOGGLE_WIDTH,
 					20,
@@ -230,7 +213,7 @@ public class LuipyConfigScreen extends Screen {
 				this.addRenderableWidget(enabledToggle);
 			}
 
-			int idsY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + 12;
+			int idsY = sectionY + PROFILE_CONTROLS_HEIGHT + 4;
 			if (idsY + 20 >= this.contentTop && idsY <= this.contentBottom) {
 				EditBox idsField = new EditBox(
 					this.font,
@@ -238,7 +221,7 @@ public class LuipyConfigScreen extends Screen {
 					idsY,
 					fieldWidth,
 					20,
-					Component.translatable("luipy-utils-mod.config.block_highlight_ids")
+					Component.empty()
 				);
 				idsField.setMaxLength(2048);
 				idsField.setValue(profile.blockIds != null ? profile.blockIds : "");
@@ -246,7 +229,7 @@ public class LuipyConfigScreen extends Screen {
 				this.addRenderableWidget(idsField);
 			}
 
-			int previewY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 8;
+			int previewY = sectionY + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 4;
 			if (previewY + RESET_ICON_SIZE >= this.contentTop && previewY <= this.contentBottom) {
 				final int idx = profileIndex;
 				int resetX = this.contentLeft + TEXTURE_PREVIEW_SIZE + 4;
@@ -263,11 +246,14 @@ public class LuipyConfigScreen extends Screen {
 		}
 
 		int contentHeight = this.contentBottom - this.contentTop;
-		int totalHeight = ROW_HEIGHT + LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT * PROFILE_SECTION_HEIGHT;
+		int totalHeight = WORLD_HEADER_HEIGHT + LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT * PROFILE_SECTION_HEIGHT;
 		this.maxScroll = Math.max(0, totalHeight - contentHeight);
 	}
 
 	private void selectActiveProfile(int profileIndex) {
+		if (this.config.activeBlockHighlightProfile == profileIndex) {
+			return;
+		}
 		this.config.activeBlockHighlightProfile = profileIndex;
 		BlockHighlightManager.reloadFromConfig();
 		this.init();
@@ -325,9 +311,6 @@ public class LuipyConfigScreen extends Screen {
 
 	private void syncWorldTabToConfig() {
 		for (int i = 0; i < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; i++) {
-			if (this.profileNameFields[i] != null) {
-				this.config.blockHighlightProfiles[i].name = this.profileNameFields[i].getValue().trim();
-			}
 			if (this.profileBlockIdFields[i] != null) {
 				this.config.blockHighlightProfiles[i].blockIds = this.profileBlockIdFields[i].getValue();
 			}
@@ -366,7 +349,7 @@ public class LuipyConfigScreen extends Screen {
 			int y = this.contentTop + 4 - (int) this.scrollOffset;
 			List<LuipyConfigBooleanEntry> entries = LuipyConfigCategories.forCategory(LuipyConfigCategory.WORLD);
 			for (LuipyConfigBooleanEntry entry : entries) {
-				if (y + ROW_HEIGHT >= this.contentTop && y <= this.contentBottom) {
+				if (y + WORLD_HEADER_HEIGHT >= this.contentTop && y <= this.contentBottom) {
 					int labelX = this.contentLeft;
 					if (entry.iconItem() != null) {
 						graphics.renderItem(entry.iconItem().getDefaultInstance(), this.contentLeft, y + 2);
@@ -374,48 +357,28 @@ public class LuipyConfigScreen extends Screen {
 					}
 					graphics.drawString(this.font, entry.label(), labelX, y, 0xFFFFFF);
 					graphics.drawString(this.font, entry.description(), labelX, y + 12, 0x888888);
-				}
-				y += ROW_HEIGHT;
-			}
-
-			int profileStartY = this.contentTop + ROW_HEIGHT - (int) this.scrollOffset;
-			for (int profileIndex = 0; profileIndex < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; profileIndex++) {
-				int sectionY = profileStartY + profileIndex * PROFILE_SECTION_HEIGHT;
-				int controlsY = sectionY + PROFILE_NAME_HEIGHT;
-				int idsLabelY = controlsY + PROFILE_CONTROLS_HEIGHT;
-				int textureLabelY = idsLabelY + 28;
-
-				if (controlsY >= this.contentTop && controlsY <= this.contentBottom) {
 					graphics.drawString(
 						this.font,
-						Component.translatable("luipy-utils-mod.config.block_highlight.profile_enabled"),
-						this.contentLeft,
-						controlsY + 6,
+						Component.translatable("luipy-utils-mod.config.block_highlight_ids.desc"),
+						labelX,
+						y + 24,
 						0x888888
 					);
 				}
+				y += WORLD_HEADER_HEIGHT;
+			}
+
+			int profileStartY = this.contentTop + WORLD_HEADER_HEIGHT - (int) this.scrollOffset;
+			for (int profileIndex = 0; profileIndex < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; profileIndex++) {
+				int sectionY = profileStartY + profileIndex * PROFILE_SECTION_HEIGHT;
+				int idsLabelY = sectionY + PROFILE_CONTROLS_HEIGHT;
+
 				if (idsLabelY >= this.contentTop && idsLabelY <= this.contentBottom) {
 					graphics.drawString(
 						this.font,
 						Component.translatable("luipy-utils-mod.config.block_highlight_ids"),
 						this.contentLeft,
 						idsLabelY,
-						0xFFFFFF
-					);
-					graphics.drawString(
-						this.font,
-						Component.translatable("luipy-utils-mod.config.block_highlight_ids.desc"),
-						this.contentLeft,
-						idsLabelY + 12,
-						0x888888
-					);
-				}
-				if (textureLabelY >= this.contentTop && textureLabelY <= this.contentBottom) {
-					graphics.drawString(
-						this.font,
-						Component.translatable("luipy-utils-mod.config.block_highlight.texture"),
-						this.contentLeft,
-						textureLabelY,
 						0xFFFFFF
 					);
 				}
@@ -488,10 +451,10 @@ public class LuipyConfigScreen extends Screen {
 			|| mouseY < this.contentTop || mouseY > this.contentBottom) {
 			return -1;
 		}
-		int profileStartY = this.contentTop + ROW_HEIGHT - (int) this.scrollOffset;
+		int profileStartY = this.contentTop + WORLD_HEADER_HEIGHT - (int) this.scrollOffset;
 		for (int profileIndex = 0; profileIndex < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; profileIndex++) {
 			int sectionY = profileStartY + profileIndex * PROFILE_SECTION_HEIGHT;
-			int previewY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 8;
+			int previewY = sectionY + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 4;
 			if (mouseY >= previewY && mouseY < previewY + TEXTURE_PREVIEW_SIZE) {
 				return profileIndex;
 			}
@@ -524,7 +487,7 @@ public class LuipyConfigScreen extends Screen {
 
 	private void renderProfileTexturePreview(GuiGraphics graphics, int profileIndex, int sectionY, int mouseX, int mouseY) {
 		int previewX = this.contentLeft;
-		int previewY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 8;
+		int previewY = sectionY + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 4;
 		if (previewY + TEXTURE_PREVIEW_SIZE < this.contentTop || previewY > this.contentBottom) {
 			return;
 		}
@@ -537,8 +500,18 @@ public class LuipyConfigScreen extends Screen {
 			&& mouseY >= previewY && mouseY < previewY + TEXTURE_PREVIEW_SIZE;
 		int borderColor = hovered ? 0xFFAAAAAA : 0xFF303030;
 		graphics.fill(previewX - 1, previewY - 1, previewX + TEXTURE_PREVIEW_SIZE + 1, previewY + TEXTURE_PREVIEW_SIZE + 1, borderColor);
-		RenderSystem.setShader(GameRenderer::getPositionTexShader);
-		RenderSystem.setShaderTexture(0, textureId);
-		graphics.blit(textureId, previewX, previewY, 0, 0, texWidth, texHeight, TEXTURE_PREVIEW_SIZE, TEXTURE_PREVIEW_SIZE, texWidth, texHeight);
+		graphics.blit(
+			textureId,
+			previewX,
+			previewY,
+			TEXTURE_PREVIEW_SIZE,
+			TEXTURE_PREVIEW_SIZE,
+			0,
+			0,
+			texWidth,
+			texHeight,
+			texWidth,
+			texHeight
+		);
 	}
 }

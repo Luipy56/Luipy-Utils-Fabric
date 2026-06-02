@@ -192,7 +192,7 @@ public final class LuipyConfigCategories {
 			for (int i = 0; i < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; i++) {
 				LuipyUtilsConfig.HighlightProfile profile = cfg.blockHighlightProfiles[i];
 				profile.name = "Profile " + (i + 1);
-				profile.blockIds = "";
+				profile.blockIds = i == 0 ? LuipyUtilsConfig.DEFAULT_HIGHLIGHT_BLOCK_IDS : "";
 				profile.enabled = true;
 				profile.useCustomTexture = false;
 			}

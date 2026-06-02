@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 @SuppressWarnings("CanBeFinal")
 public final class LuipyUtilsConfig {
 	public static final int HIGHLIGHT_PROFILE_COUNT = 3;
+	public static final String DEFAULT_HIGHLIGHT_BLOCK_IDS = "redstone_ore, gravel, clay";
 
 	public boolean masterEnabled = true;
 	/** When true, the unified menu (R) includes a 3×9 ender chest panel (requires mod on server). */
@@ -76,10 +77,13 @@ public final class LuipyUtilsConfig {
 			for (int i = 0; i < HIGHLIGHT_PROFILE_COUNT; i++) {
 				HighlightProfile profile = new HighlightProfile();
 				profile.name = "Profile " + (i + 1);
+				if (i == 0) {
+					profile.blockIds = DEFAULT_HIGHLIGHT_BLOCK_IDS;
+				}
 				if (blockHighlightProfiles != null && i < blockHighlightProfiles.length && blockHighlightProfiles[i] != null) {
 					HighlightProfile existing = blockHighlightProfiles[i];
 					profile.name = existing.name != null ? existing.name : profile.name;
-					profile.blockIds = existing.blockIds != null ? existing.blockIds : "";
+					profile.blockIds = existing.blockIds != null ? existing.blockIds : profile.blockIds;
 					profile.enabled = existing.enabled;
 					profile.useCustomTexture = existing.useCustomTexture;
 				}
