@@ -1,7 +1,6 @@
 package com.luipy.utilsmod.client;
 
 import com.luipy.utilsmod.client.config.LuipyConfigKeybinds;
-import com.luipy.utilsmod.client.config.BlockHighlightProfileKeybinds;
 import com.luipy.utilsmod.client.ender.EnderGateHudIndicator;
 import com.luipy.utilsmod.client.config.LuipyUnifiedMenuKeybinds;
 import com.luipy.utilsmod.client.highlight.BlockHighlightManager;
@@ -23,7 +22,6 @@ public class LuipyUtilsModClient implements ClientModInitializer {
 		LuipyUtilsConfigManager.load();
 		LuipyConfigKeybinds.register();
 		LuipyUnifiedMenuKeybinds.register();
-		BlockHighlightProfileKeybinds.register();
 		EnderGateHudIndicator.register();
 		BlockHighlightModelPlugin.register();
 		HighlightEmphasisTextures.syncCustomFlagFromDisk();

@@ -4,6 +4,7 @@ import com.luipy.utilsmod.client.highlight.HighlightEmphasisTextures;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
 import com.luipy.utilsmod.inventory.workstation.WorkstationKind;
 import java.util.ArrayList;
+import net.minecraft.world.item.Items;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -46,7 +47,8 @@ public final class LuipyConfigCategories {
 			"luipy-utils-mod.config.show_ender_with_inventory.desc",
 			cfg -> cfg.showEnderChestWithInventory,
 			(cfg, v) -> cfg.showEnderChestWithInventory = v,
-			true
+			true,
+			Items.ENDER_CHEST
 		));
 		list.add(new LuipyConfigBooleanEntry(
 			LuipyConfigCategory.INVENTORY,
@@ -54,7 +56,8 @@ public final class LuipyConfigCategories {
 			"luipy-utils-mod.config.show_ender_gate_hud.desc",
 			cfg -> cfg.showEnderGateHudIndicator,
 			(cfg, v) -> cfg.showEnderGateHudIndicator = v,
-			true
+			true,
+			Items.ENDER_CHEST
 		));
 		list.add(new LuipyConfigBooleanEntry(
 			LuipyConfigCategory.INVENTORY,
@@ -70,7 +73,8 @@ public final class LuipyConfigCategories {
 			"luipy-utils-mod.config.always_virtual.desc",
 			cfg -> cfg.alwaysAllowVirtualOpen,
 			(cfg, v) -> cfg.alwaysAllowVirtualOpen = v,
-			false
+			false,
+			Items.ENDER_CHEST
 		));
 		list.add(new LuipyConfigBooleanEntry(
 			LuipyConfigCategory.INVENTORY,
@@ -78,7 +82,8 @@ public final class LuipyConfigCategories {
 			"luipy-utils-mod.config.require_item.desc",
 			cfg -> cfg.requireEnderChestItem,
 			(cfg, v) -> cfg.requireEnderChestItem = v,
-			true
+			true,
+			Items.ENDER_CHEST
 		));
 		list.add(new LuipyConfigBooleanEntry(
 			LuipyConfigCategory.INVENTORY,
@@ -86,7 +91,8 @@ public final class LuipyConfigCategories {
 			"luipy-utils-mod.config.require_block.desc",
 			cfg -> cfg.requireNearbyEnderChestBlock,
 			(cfg, v) -> cfg.requireNearbyEnderChestBlock = v,
-			true
+			true,
+			Items.ENDER_CHEST
 		));
 
 		addWorkstationEntries(list);

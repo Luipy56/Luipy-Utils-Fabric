@@ -72,42 +72,6 @@ public final class BlockHighlightManager {
 		notifyApplyResult(result);
 	}
 
-	/**
-	 * Advances to the next enabled highlight profile, saves, reloads, and shows a brief chat line.
-	 */
-	public static void cycleActiveProfile() {
-		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
-		cfg.ensureProfilesInitialized();
-		int start = Math.floorMod(cfg.activeBlockHighlightProfile, LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT);
-		int next = start;
-		do {
-			next = (next + 1) % LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT;
-			if (next == start) {
-				break;
-			}
-		} while (!cfg.blockHighlightProfiles[next].enabled);
-
-		if (!cfg.blockHighlightProfiles[next].enabled) {
-			return;
-		}
-
-		cfg.activeBlockHighlightProfile = next;
-		LuipyUtilsConfig.HighlightProfile profile = cfg.activeHighlightProfile();
-		ParseResult result = parseBlockIds(profile.blockIds);
-		targetBlocks = result.blocks();
-		LuipyUtilsConfigManager.save();
-		refreshClientResources();
-
-		Minecraft client = Minecraft.getInstance();
-		if (client.player != null) {
-			String name = profile.name != null && !profile.name.isBlank() ? profile.name : "Profile " + (next + 1);
-			client.player.displayClientMessage(
-				Component.translatable("luipy-utils-mod.config.block_highlight.profile_cycled", name),
-				true
-			);
-		}
-	}
-
 	private static void notifyApplyResult(ParseResult result) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.player == null) {

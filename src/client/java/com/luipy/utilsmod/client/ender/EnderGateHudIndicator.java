@@ -16,7 +16,10 @@ import net.minecraft.world.item.Items;
 public final class EnderGateHudIndicator {
 	private static final int HOTBAR_LEFT_OFFSET = 91;
 	private static final int ICON_GAP = 4;
-	private static final int HOTBAR_Y_OFFSET = 22;
+	/** Matches {@code Gui.renderHotbar}: background top is 22px above the screen bottom. */
+	private static final int HOTBAR_BOTTOM_OFFSET = 22;
+	private static final int HOTBAR_BACKGROUND_HEIGHT = 22;
+	private static final int HOTBAR_ITEM_SIZE = 16;
 
 	private EnderGateHudIndicator() {
 	}
@@ -46,8 +49,10 @@ public final class EnderGateHudIndicator {
 		}
 
 		int centerX = client.getWindow().getGuiScaledWidth() / 2;
-		int y = client.getWindow().getGuiScaledHeight() - HOTBAR_Y_OFFSET;
-		int x = centerX - HOTBAR_LEFT_OFFSET - 16 - ICON_GAP;
+		int screenHeight = client.getWindow().getGuiScaledHeight();
+		int hotbarTop = screenHeight - HOTBAR_BOTTOM_OFFSET;
+		int y = hotbarTop + (HOTBAR_BACKGROUND_HEIGHT - HOTBAR_ITEM_SIZE) / 2;
+		int x = centerX - HOTBAR_LEFT_OFFSET - HOTBAR_ITEM_SIZE - ICON_GAP;
 
 		ItemStack icon = Items.ENDER_CHEST.getDefaultInstance();
 		guiGraphics.renderItem(icon, x, y);

@@ -433,10 +433,6 @@ public class LuipyConfigScreen extends Screen {
 			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.open_unified_menu"), this.contentLeft, y, 0xCCCCCC);
 			y += 12;
 			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.open_unified_menu.desc"), this.contentLeft, y, 0x888888);
-			y += 20;
-			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.cycle_highlight_profile"), this.contentLeft, y, 0xCCCCCC);
-			y += 12;
-			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.cycle_highlight_profile.desc"), this.contentLeft, y, 0x888888);
 			graphics.disableScissor();
 			return;
 		}

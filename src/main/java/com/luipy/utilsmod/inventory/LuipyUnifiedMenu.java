@@ -36,7 +36,7 @@ import net.minecraft.world.item.crafting.Recipe;
  * then player main/hotbar/offhand. See {@link #workstationHost} for workstation slot ranges.
  */
 public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
-	public static final int TOP_LAYOUT_PADDING = 30;
+	public static final int TOP_LAYOUT_PADDING = 0;
 	public static final int ENDER_SLOT_COUNT = 27;
 	public static final int CRAFT_GRID_COUNT = 9;
 	public static final int ENDER_PANEL_HEIGHT = 17 + 3 * 18;
