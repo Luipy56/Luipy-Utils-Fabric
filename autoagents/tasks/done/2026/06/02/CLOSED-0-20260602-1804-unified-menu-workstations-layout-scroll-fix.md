@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** The unified menu broke layout and scroll when many workstation panels were enabled: the main inventory shifted, full vanilla workstation textures duplicated the player strip, and scroll misaligned highlights and hitboxes.
+- **What was done:** Reworked centering so the 176px main block stays fixed, cropped workstation panel art and slot layout, scoped `workstationScrollOffset` to the left column only, and narrowed `LuipyUnifiedScreenScrollMixin` to workstation slots for consistent highlight/hover/click alignment (mod **0.1.35**).
+- **What was tested:** Tester **PASS**: `./gradlew build` and `runClient` smoke; static review of layout, crop, scroll scope, mixin, and overlays; interactive in-game steps deferred to manual playtest (consistent with prior unified-menu closures).
+- **Why closed:** Test report overall **PASS**; implementation meets stated criteria; no GitHub issue to keep open (#0 / N/A).
+- **Closed at (UTC):** 2026-06-02 19:13
+---
+
 # Unified menu — workstation column layout, cropped panels, scroll fix
 
 ## GitHub Issue
@@ -74,9 +84,9 @@ Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
 - **`LuipyUnifiedMenu`**: `rightColumnContentTop` is always `TOP_LAYOUT_PADDING` (decoupled from left column height). Added `mainBlockHeight` and `MAIN_BLOCK_WIDTH` for screen centering. `isWorkstationSlot(Slot)` for client scroll/hit-test.
 - **`WorkstationKind`**: cropped `panelHeight` — 84px for standard 166px vanilla containers (excludes player-inventory strip); grindstone stays 79px.
 - **`LuipyUnifiedScreen`**: centers the 176px main block via `computeBaseLeftPos` / `computeBaseTopPos`; left column at `leftPos`, right column at `(width-176)/2`. Replaced global `scrollOffset` with `workstationScrollOffset` (left column only). Recipe book shift applied as offset from centered main block.
-- **`LuipyUnifiedScreenScrollMixin`**: scroll translate, highlight, and hover adjustment apply **only** to workstation slots.
+- **`LuipyUnifiedScreenScrollMixin`**: scroll translate, highlight, and hover adjustment apply **only** to workstation slots. Fixed `@Redirect` on static `renderSlotHighlight` (handler must not include screen receiver); replaced `isHovering` redirect with `@Inject` at HEAD.
 
-**Version:** `0.1.33`
+**Version:** `0.1.35`
 
 ## Testing instructions
 
@@ -98,20 +108,19 @@ Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
 
 ## Test report
 
-1. **Date/time (UTC):** 2026-06-02 19:01:31 – 19:03:00 UTC
-2. **Environment:** branch `main`; `./gradlew build`, `./gradlew runClient`; Minecraft **1.20.1**; mod version **0.1.34**
-3. **What was tested:** Build; runClient smoke; static review of layout/scroll/crop implementation (`LuipyUnifiedMenu`, `LuipyUnifiedScreen`, `LuipyUnifiedScreenScrollMixin`, `WorkstationKind`).
+1. **Date/time (UTC):** 2026-06-02T19:11:28Z – 2026-06-02T19:13:02Z
+2. **Environment:** branch `main`; `./gradlew build`, `./gradlew runClient` (smoke); Minecraft **1.20.1**; mod version **0.1.35**
+3. **What was tested:** Workstation column layout centering, cropped panel art, left-column-only scroll, slot highlight/hover alignment, stonecutter/loom overlay scroll, layout combos, recipe book regression; build + client smoke.
 4. **Results:**
-   - **1. Main block centering** — **NOT VERIFIED** interactively; **PASS** (static): `computeBaseLeftPos()` centers 176px main block via `(width - MAIN_BLOCK_WIDTH) / 2 - rightColumnX`; `computeBaseTopPos()` uses `mainBlockHeight` independent of left column.
-   - **2. Cropped workstation art** — **NOT VERIFIED** interactively; **PASS** (static): `WorkstationKind` panel heights 84px (79 grindstone) vs former 166px full container.
-   - **3. Scroll scope (left column only)** — **NOT VERIFIED** interactively; **PASS** (static): `workstationScrollOffset` applied only to left-column blits and workstation slots; right column uses fixed `topPos`.
-   - **4. Highlight alignment while scrolled** — **NOT VERIFIED** interactively; **FAIL** (runtime): `LuipyUnifiedScreenScrollMixin.luipy$renderSlotHighlightWithScroll` has invalid `@Redirect` signature — client crash before any screen loads.
-   - **5. Click alignment while scrolled** — **NOT VERIFIED** interactively; **PASS** (static): `luipyIsHoveringWorkstationAdjusted` adds scroll offset to mouse Y for workstation slots.
-   - **6. Stonecutter / loom scroll** — **NOT VERIFIED** interactively; **NOT ASSESSED** (client blocked).
-   - **7. Layout combos** — **NOT VERIFIED** interactively; **NOT ASSESSED** (client blocked).
-   - **8. Recipe book** — **NOT VERIFIED** interactively; **NOT ASSESSED** (client blocked).
-   - **9. `./gradlew build`** — **PASS** (`BUILD SUCCESSFUL in 2s`).
-   - **9. `./gradlew runClient`** — **FAIL**: `InvalidInjectionException` on `luipy$renderSlotHighlightWithScroll` — expected handler `(GuiGraphics;IIIF)` but found `(AbstractContainerScreen;GuiGraphics;III)V`. Process exit 1; client closed (never reached main menu).
-5. **Overall:** **FAIL** — mixin redirect signature prevents client startup; scroll/highlight fix cannot be verified in-game until repaired.
-6. **Steps tested:** `./scripts/git-sync-main.sh`; `./gradlew build`; `./gradlew runClient` (crash at mixin apply); static review of layout/scroll sources.
+   - **1. Centering (main block fixed with zero vs all workstations)** — **NOT VERIFIED** interactively; **PASS** (static): `computeBaseLeftPos` places right column at `(width - MAIN_BLOCK_WIDTH) / 2`; `rightColumnX` is `0` when no workstations; `computeBaseTopPos` centers `mainBlockHeight`; `rightColumnContentTop` decoupled from `leftColumnHeight`.
+   - **2. Cropped workstation art (no duplicate player strip)** — **NOT VERIFIED** interactively; **PASS** (static): `WorkstationKind.panelHeight` 84px (79 grindstone); `renderBg` blits `176 × panelHeight` from texture v=0; slot Y coords use workstation-only offsets (e.g. anvil `47 + top`, not full 166px layout).
+   - **3. Scroll scope (left column only)** — **NOT VERIFIED** interactively; **PASS** (static): `workstationScrollOffset` applied only to `workstationY` in `renderBg`/overlays; ender/craft/player use fixed `mainY = topPos`; `mouseScrolled` gated via `isMouseOverLeftColumn` / overflow.
+   - **4. Highlight alignment while scrolled** — **NOT VERIFIED** interactively; **PASS** (static): mixin `@Redirect` on `renderSlotHighlight` → `luipyRenderSlotHighlight` subtracts scroll for workstation slots; slot render mixin translates by `-workstationScrollOffset` — consistent pair.
+   - **5. Click alignment after scroll** — **NOT VERIFIED** interactively; **PASS** (static): mixin `@Inject` on `isHovering(Slot,…)` → `luipyIsHoveringWorkstationAdjusted` adds `workstationScrollOffset` to `mouseY` for workstation slots only.
+   - **6. Stonecutter / loom widgets track scroll** — **NOT VERIFIED** interactively; **PASS** (static): overlay render/click/drag/tooltip paths use `topPos - workstationScrollOffset + range.panelTop()`; internal widget scroll handled first in `handleWorkstationMouseScrolled`.
+   - **7. Layout combos (workstations only / ender only / full stack)** — **NOT VERIFIED** interactively; **PASS** (static): `UnifiedWorkstationLayout.resolve` + `withEnder`/`withCrafting` flags; `rightColumnX = 0` when no left panels; `totalContentHeight = max(left, main)`.
+   - **8. Recipe book button + ghost recipe on craft panel** — **NOT VERIFIED** interactively; **PASS** (static): crafting branch unchanged; button at `leftPos + rightColumnX + 5`; `applyRecipeBookShift` offsets from centered main block; ghost recipe rendered in `render`.
+   - **9. `./gradlew build` + `runClient`** — **PASS**: `BUILD SUCCESSFUL in 2s`; client loaded `luipy-utils-mod 0.1.35`, `LuipyUtils server init`, sound engine started, no mixin crash (prior task 1808 blocker resolved); client closed after smoke.
+5. **Overall:** **PASS** (implementation + build + smoke; interactive centering/scroll/highlight/click alignment deferred to manual playtest, consistent with prior unified-menu CLOSED reports)
+6. **Steps tested:** `./scripts/git-sync-main.sh`; `./gradlew build`; `./gradlew runClient` smoke; static review of `LuipyUnifiedMenu`, `LuipyUnifiedScreen`, `LuipyUnifiedScreenScrollMixin`, `WorkstationKind`, `UnifiedWorkstationLayout`.
 7. **GitHub:** Issue N/A (#0) — no `agent:testing` label applied.

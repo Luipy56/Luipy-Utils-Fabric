@@ -5,18 +5,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractContainerScreen.class)
 abstract class LuipyUnifiedScreenScrollMixin {
-	@Shadow
-	protected int leftPos;
-
-	@Shadow
-	protected int topPos;
-
 	@Redirect(
 		method = "render",
 		at = @At(
@@ -43,13 +38,8 @@ abstract class LuipyUnifiedScreenScrollMixin {
 			target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderSlotHighlight(Lnet/minecraft/client/gui/GuiGraphics;III)V"
 		)
 	)
-	private void luipy$renderSlotHighlightWithScroll(
-		AbstractContainerScreen<?> screen,
-		GuiGraphics graphics,
-		int x,
-		int y,
-		int blitOffset
-	) {
+	private void luipy$renderSlotHighlightWithScroll(GuiGraphics graphics, int x, int y, int blitOffset) {
+		AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object) this;
 		if (screen instanceof LuipyUnifiedScreen unified) {
 			unified.luipyRenderSlotHighlight(graphics, x, y, blitOffset);
 			return;
@@ -57,35 +47,10 @@ abstract class LuipyUnifiedScreenScrollMixin {
 		AbstractContainerScreen.renderSlotHighlight(graphics, x, y, blitOffset);
 	}
 
-	@Redirect(
-		method = "isHovering(Lnet/minecraft/world/inventory/Slot;DD)Z",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;isHovering(IIIIDD)Z"
-		)
-	)
-	private boolean luipy$workstationHover(
-		AbstractContainerScreen<?> screen,
-		Slot slot,
-		int slotX,
-		int slotY,
-		int width,
-		int height,
-		double mouseX,
-		double mouseY
-	) {
-		if (screen instanceof LuipyUnifiedScreen unified) {
-			return unified.luipyIsHoveringWorkstationAdjusted(slot, mouseX, mouseY);
+	@Inject(method = "isHovering(Lnet/minecraft/world/inventory/Slot;DD)Z", at = @At("HEAD"), cancellable = true)
+	private void luipy$workstationHover(Slot slot, double mouseX, double mouseY, CallbackInfoReturnable<Boolean> cir) {
+		if ((Object) this instanceof LuipyUnifiedScreen unified) {
+			cir.setReturnValue(unified.luipyIsHoveringWorkstationAdjusted(slot, mouseX, mouseY));
 		}
-		return luipy$rectHover(slotX, slotY, width, height, mouseX, mouseY);
-	}
-
-	private boolean luipy$rectHover(int slotX, int slotY, int width, int height, double mouseX, double mouseY) {
-		double d = mouseX - (double) this.leftPos;
-		double e = mouseY - (double) this.topPos;
-		return d >= (double) (slotX - 1)
-			&& d < (double) (slotX + width + 1)
-			&& e >= (double) (slotY - 1)
-			&& e < (double) (slotY + height + 1);
 	}
 }
