@@ -30,7 +30,7 @@ public final class UnifiedWorkstationLayout {
 	public static int leftColumnHeight(List<WorkstationKind> workstations, int topPadding) {
 		int height = topPadding;
 		for (WorkstationKind kind : workstations) {
-			height += kind.panelHeight;
+			height += kind.layoutHeight();
 		}
 		return height;
 	}
@@ -40,7 +40,7 @@ public final class UnifiedWorkstationLayout {
 		int y = topPadding;
 		for (WorkstationKind kind : workstations) {
 			tops.put(kind, y);
-			y += kind.panelHeight;
+			y += kind.layoutHeight();
 		}
 		return tops;
 	}

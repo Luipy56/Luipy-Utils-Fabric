@@ -127,36 +127,56 @@ public class LuipyConfigScreen extends Screen {
 			return;
 		}
 
-		List<LuipyConfigBooleanEntry> entries = LuipyConfigCategories.forCategory(this.selectedCategory);
-		int toggleX = this.contentRight - TOGGLE_WIDTH;
+		List<LuipyConfigRowEntry> entries = LuipyConfigCategories.forCategory(this.selectedCategory);
 		int y = this.contentTop - (int) this.scrollOffset;
 
-		for (LuipyConfigBooleanEntry entry : entries) {
+		for (LuipyConfigRowEntry entry : entries) {
 			if (y + ROW_HEIGHT < this.contentTop || y > this.contentBottom) {
 				y += ROW_HEIGHT;
 				continue;
 			}
 
-			boolean current = entry.getter().apply(this.config);
-			LuipyConfigOnOffToggle toggle = LuipyConfigOnOffToggle.create(
-				toggleX,
-				y + 8,
-				TOGGLE_WIDTH,
-				20,
-				current,
-				entry.label(),
-				(btn, value) -> entry.setter().accept(this.config, value)
-			);
-			this.toggleButtons.add(toggle);
-			this.addRenderableWidget(toggle);
+			if (entry instanceof LuipyConfigBooleanEntry booleanEntry) {
+				boolean current = booleanEntry.getter().apply(this.config);
+				LuipyConfigOnOffToggle toggle = LuipyConfigOnOffToggle.create(
+					this.contentRight - TOGGLE_WIDTH,
+					y + 8,
+					TOGGLE_WIDTH,
+					20,
+					current,
+					booleanEntry.label(),
+					(btn, value) -> booleanEntry.setter().accept(this.config, value)
+				);
+				this.toggleButtons.add(toggle);
+				this.addRenderableWidget(toggle);
+			} else if (entry instanceof LuipyConfigCycleEntry<?> cycleEntry) {
+				this.addCycleToggle(cycleEntry, y);
+			}
 			y += ROW_HEIGHT;
 		}
 
 		this.maxScroll = Math.max(0, entries.size() * ROW_HEIGHT - (this.contentBottom - this.contentTop));
 	}
 
+	private <T> void addCycleToggle(LuipyConfigCycleEntry<T> entry, int y) {
+		T current = entry.getter().apply(this.config);
+		LuipyConfigCycleToggle<T> toggle = LuipyConfigCycleToggle.create(
+			this.contentRight - TOGGLE_WIDTH,
+			y + 8,
+			TOGGLE_WIDTH,
+			20,
+			current,
+			entry.values(),
+			entry::valueLabel,
+			entry.valueColor(),
+			entry.label(),
+			(btn, value) -> entry.setter().accept(this.config, value)
+		);
+		this.addRenderableWidget(toggle);
+	}
+
 	private void rebuildWorldWidgets() {
-		List<LuipyConfigBooleanEntry> entries = LuipyConfigCategories.forCategory(LuipyConfigCategory.WORLD);
+		List<LuipyConfigBooleanEntry> entries = LuipyConfigCategories.booleanEntriesForCategory(LuipyConfigCategory.WORLD);
 		int toggleX = this.contentRight - TOGGLE_WIDTH;
 		int y = this.contentTop - (int) this.scrollOffset;
 
@@ -347,7 +367,8 @@ public class LuipyConfigScreen extends Screen {
 
 		if (this.selectedCategory == LuipyConfigCategory.WORLD) {
 			int y = this.contentTop + 4 - (int) this.scrollOffset;
-			List<LuipyConfigBooleanEntry> entries = LuipyConfigCategories.forCategory(LuipyConfigCategory.WORLD);
+			List<LuipyConfigBooleanEntry> entries =
+				LuipyConfigCategories.booleanEntriesForCategory(LuipyConfigCategory.WORLD);
 			for (LuipyConfigBooleanEntry entry : entries) {
 				if (y + WORLD_HEADER_HEIGHT >= this.contentTop && y <= this.contentBottom) {
 					int labelX = this.contentLeft;
@@ -403,10 +424,10 @@ public class LuipyConfigScreen extends Screen {
 			return;
 		}
 
-		List<LuipyConfigBooleanEntry> entries = LuipyConfigCategories.forCategory(this.selectedCategory);
+		List<LuipyConfigRowEntry> entries = LuipyConfigCategories.forCategory(this.selectedCategory);
 		int y = this.contentTop + 4 - (int) this.scrollOffset;
 
-		for (LuipyConfigBooleanEntry entry : entries) {
+		for (LuipyConfigRowEntry entry : entries) {
 			if (y + ROW_HEIGHT >= this.contentTop && y <= this.contentBottom) {
 				int labelX = this.contentLeft;
 				if (entry.iconItem() != null) {

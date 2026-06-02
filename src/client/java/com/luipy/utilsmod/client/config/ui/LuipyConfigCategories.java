@@ -1,28 +1,39 @@
 package com.luipy.utilsmod.client.config.ui;
 
 import com.luipy.utilsmod.client.highlight.HighlightEmphasisTextures;
+import com.luipy.utilsmod.config.EnderChestAccessMode;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
+import com.luipy.utilsmod.config.WorkstationAccessMode;
 import com.luipy.utilsmod.inventory.workstation.WorkstationKind;
 import java.util.ArrayList;
-import net.minecraft.world.item.Items;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.world.item.Items;
 
 /**
  * Central registry mapping {@link LuipyUtilsConfig} fields to UI metadata.
- * To add a new option: config field + lang keys + one {@link LuipyConfigBooleanEntry} below.
  */
 public final class LuipyConfigCategories {
-	private static final List<LuipyConfigBooleanEntry> ENTRIES = buildEntries();
-	private static final Map<LuipyConfigCategory, List<LuipyConfigBooleanEntry>> BY_CATEGORY = indexByCategory();
+	private static final List<WorkstationAccessMode> WORKSTATION_MODES =
+		List.of(WorkstationAccessMode.OFF, WorkstationAccessMode.NEARBY, WorkstationAccessMode.ALWAYS);
+	private static final List<EnderChestAccessMode> ENDER_MODES = List.of(
+		EnderChestAccessMode.OFF,
+		EnderChestAccessMode.BLOCK,
+		EnderChestAccessMode.ITEM,
+		EnderChestAccessMode.BOTH,
+		EnderChestAccessMode.ALWAYS
+	);
+
+	private static final List<LuipyConfigRowEntry> ENTRIES = buildEntries();
+	private static final Map<LuipyConfigCategory, List<LuipyConfigRowEntry>> BY_CATEGORY = indexByCategory();
 
 	private LuipyConfigCategories() {
 	}
 
-	private static List<LuipyConfigBooleanEntry> buildEntries() {
-		List<LuipyConfigBooleanEntry> list = new ArrayList<>();
+	private static List<LuipyConfigRowEntry> buildEntries() {
+		List<LuipyConfigRowEntry> list = new ArrayList<>();
 
 		list.add(new LuipyConfigBooleanEntry(
 			LuipyConfigCategory.GENERAL,
@@ -41,13 +52,16 @@ public final class LuipyConfigCategories {
 			true
 		));
 
-		list.add(new LuipyConfigBooleanEntry(
+		list.add(new LuipyConfigCycleEntry<>(
 			LuipyConfigCategory.INVENTORY,
-			"luipy-utils-mod.config.show_ender_with_inventory",
-			"luipy-utils-mod.config.show_ender_with_inventory.desc",
-			cfg -> cfg.showEnderChestWithInventory,
-			(cfg, v) -> cfg.showEnderChestWithInventory = v,
-			true,
+			"luipy-utils-mod.config.ender_chest.access",
+			"luipy-utils-mod.config.ender_chest.access.desc",
+			cfg -> cfg.enderChestAccess,
+			(cfg, v) -> cfg.enderChestAccess = v,
+			EnderChestAccessMode.BOTH,
+			ENDER_MODES,
+			mode -> "luipy-utils-mod.config.access." + mode.name().toLowerCase(),
+			LuipyConfigCycleToggle.enderAccessColors(EnderChestAccessMode.OFF, EnderChestAccessMode.ALWAYS),
 			Items.ENDER_CHEST
 		));
 		list.add(new LuipyConfigBooleanEntry(
@@ -67,33 +81,6 @@ public final class LuipyConfigCategories {
 			(cfg, v) -> cfg.showCraftingTableWithInventory = v,
 			false,
 			Items.CRAFTING_TABLE
-		));
-		list.add(new LuipyConfigBooleanEntry(
-			LuipyConfigCategory.INVENTORY,
-			"luipy-utils-mod.config.always_virtual",
-			"luipy-utils-mod.config.always_virtual.desc",
-			cfg -> cfg.alwaysAllowVirtualOpen,
-			(cfg, v) -> cfg.alwaysAllowVirtualOpen = v,
-			false,
-			Items.ENDER_CHEST
-		));
-		list.add(new LuipyConfigBooleanEntry(
-			LuipyConfigCategory.INVENTORY,
-			"luipy-utils-mod.config.require_item",
-			"luipy-utils-mod.config.require_item.desc",
-			cfg -> cfg.requireEnderChestItem,
-			(cfg, v) -> cfg.requireEnderChestItem = v,
-			true,
-			Items.ENDER_CHEST
-		));
-		list.add(new LuipyConfigBooleanEntry(
-			LuipyConfigCategory.INVENTORY,
-			"luipy-utils-mod.config.require_block",
-			"luipy-utils-mod.config.require_block.desc",
-			cfg -> cfg.requireNearbyEnderChestBlock,
-			(cfg, v) -> cfg.requireNearbyEnderChestBlock = v,
-			true,
-			Items.ENDER_CHEST
 		));
 
 		addWorkstationEntries(list);
@@ -127,45 +114,33 @@ public final class LuipyConfigCategories {
 		return Collections.unmodifiableList(list);
 	}
 
-	private static void addWorkstationEntries(List<LuipyConfigBooleanEntry> list) {
+	private static void addWorkstationEntries(List<LuipyConfigRowEntry> list) {
 		for (WorkstationKind kind : WorkstationKind.values()) {
 			var blockItem = net.minecraft.world.item.Item.BY_BLOCK.get(kind.block);
-			list.add(new LuipyConfigBooleanEntry(
+			list.add(new LuipyConfigCycleEntry<>(
 				LuipyConfigCategory.INVENTORY,
-				kind.showConfigKey(),
-				kind.showConfigKey() + ".desc",
-				kind::showEnabled,
-				kind::setShow,
-				false,
-				blockItem
-			));
-			list.add(new LuipyConfigBooleanEntry(
-				LuipyConfigCategory.INVENTORY,
-				kind.alwaysConfigKey(),
-				kind.alwaysConfigKey() + ".desc",
-				kind::alwaysAvailable,
-				kind::setAlwaysAvailable,
-				false,
-				blockItem
-			));
-			list.add(new LuipyConfigBooleanEntry(
-				LuipyConfigCategory.INVENTORY,
-				kind.nearbyConfigKey(),
-				kind.nearbyConfigKey() + ".desc",
-				kind::requireNearbyBlock,
-				kind::setRequireNearbyBlock,
-				true,
+				kind.accessConfigKey(),
+				kind.accessConfigKey() + ".desc",
+				kind::accessMode,
+				kind::setAccessMode,
+				WorkstationAccessMode.OFF,
+				WORKSTATION_MODES,
+				mode -> "luipy-utils-mod.config.access." + mode.name().toLowerCase(),
+				LuipyConfigCycleToggle.offNeutralAlwaysColors(
+					WorkstationAccessMode.OFF,
+					WorkstationAccessMode.ALWAYS
+				),
 				blockItem
 			));
 		}
 	}
 
-	private static Map<LuipyConfigCategory, List<LuipyConfigBooleanEntry>> indexByCategory() {
-		Map<LuipyConfigCategory, List<LuipyConfigBooleanEntry>> map = new EnumMap<>(LuipyConfigCategory.class);
+	private static Map<LuipyConfigCategory, List<LuipyConfigRowEntry>> indexByCategory() {
+		Map<LuipyConfigCategory, List<LuipyConfigRowEntry>> map = new EnumMap<>(LuipyConfigCategory.class);
 		for (LuipyConfigCategory category : LuipyConfigCategory.values()) {
 			map.put(category, new ArrayList<>());
 		}
-		for (LuipyConfigBooleanEntry entry : ENTRIES) {
+		for (LuipyConfigRowEntry entry : ENTRIES) {
 			map.get(entry.category()).add(entry);
 		}
 		for (LuipyConfigCategory category : LuipyConfigCategory.values()) {
@@ -174,18 +149,22 @@ public final class LuipyConfigCategories {
 		return Collections.unmodifiableMap(map);
 	}
 
-	public static List<LuipyConfigBooleanEntry> allEntries() {
+	public static List<LuipyConfigRowEntry> allEntries() {
 		return ENTRIES;
 	}
 
-	public static List<LuipyConfigBooleanEntry> forCategory(LuipyConfigCategory category) {
+	public static List<LuipyConfigRowEntry> forCategory(LuipyConfigCategory category) {
 		return BY_CATEGORY.getOrDefault(category, List.of());
 	}
 
-	/** Restores defaults for every boolean entry in the given category. */
+	/** Restores defaults for every entry in the given category. */
 	public static void resetCategoryDefaults(LuipyUtilsConfig cfg, LuipyConfigCategory category) {
-		for (LuipyConfigBooleanEntry entry : forCategory(category)) {
-			entry.setter().accept(cfg, entry.defaultValue());
+		for (LuipyConfigRowEntry entry : forCategory(category)) {
+			if (entry instanceof LuipyConfigBooleanEntry booleanEntry) {
+				booleanEntry.setter().accept(cfg, booleanEntry.defaultValue());
+			} else if (entry instanceof LuipyConfigCycleEntry<?> cycleEntry) {
+				resetCycleDefault(cfg, cycleEntry);
+			}
 		}
 		if (category == LuipyConfigCategory.WORLD) {
 			cfg.ensureProfilesInitialized();
@@ -200,5 +179,21 @@ public final class LuipyConfigCategories {
 			cfg.blockHighlightIds = "";
 			HighlightEmphasisTextures.resetGlobalToDefault();
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> void resetCycleDefault(LuipyUtilsConfig cfg, LuipyConfigCycleEntry<T> entry) {
+		entry.setter().accept(cfg, entry.defaultValue());
+	}
+
+	/** Boolean entries only (World tab header). */
+	public static List<LuipyConfigBooleanEntry> booleanEntriesForCategory(LuipyConfigCategory category) {
+		List<LuipyConfigBooleanEntry> list = new ArrayList<>();
+		for (LuipyConfigRowEntry entry : forCategory(category)) {
+			if (entry instanceof LuipyConfigBooleanEntry booleanEntry) {
+				list.add(booleanEntry);
+			}
+		}
+		return list;
 	}
 }

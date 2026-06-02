@@ -82,7 +82,7 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		Player player = inventory.player;
 		this.enabledWorkstations = UnifiedWorkstationLayout.resolve(cfg, player, player.level());
 		this.rightColumnX = enabledWorkstations.isEmpty() ? 0 : RIGHT_COLUMN_X_OFFSET;
-		this.withEnder = cfg.showEnderChestWithInventory
+		this.withEnder = cfg.enderChestAccess != com.luipy.utilsmod.config.EnderChestAccessMode.OFF
 			&& com.luipy.utilsmod.ender.EnderGateEvaluation.passesGate(cfg, player, player.level());
 		this.withCrafting = cfg.showCraftingTableWithInventory;
 

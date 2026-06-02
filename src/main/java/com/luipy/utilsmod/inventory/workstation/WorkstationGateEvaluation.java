@@ -1,6 +1,7 @@
 package com.luipy.utilsmod.inventory.workstation;
 
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
+import com.luipy.utilsmod.config.WorkstationAccessMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
@@ -19,16 +20,14 @@ public final class WorkstationGateEvaluation {
 	}
 
 	public static boolean passesGate(LuipyUtilsConfig cfg, Player player, Level level, WorkstationKind kind) {
-		if (!cfg.masterEnabled || !kind.showEnabled(cfg)) {
+		if (!cfg.masterEnabled) {
 			return false;
 		}
-		if (kind.alwaysAvailable(cfg)) {
-			return true;
-		}
-		if (!kind.requireNearbyBlock(cfg)) {
-			return false;
-		}
-		return hasLoadedBlockNearby(player, level, kind);
+		return switch (kind.accessMode(cfg)) {
+			case OFF -> false;
+			case ALWAYS -> true;
+			case NEARBY -> hasLoadedBlockNearby(player, level, kind);
+		};
 	}
 
 	public static boolean hasLoadedBlockNearby(Player player, Level level, WorkstationKind kind) {

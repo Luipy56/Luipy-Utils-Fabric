@@ -1,5 +1,6 @@
 package com.luipy.utilsmod.ender;
 
+import com.luipy.utilsmod.config.EnderChestAccessMode;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -50,37 +51,27 @@ public final class EnderGateEvaluation {
 		if (!cfg.masterEnabled) {
 			return false;
 		}
-		if (cfg.alwaysAllowVirtualOpen) {
-			return true;
-		}
-		boolean needItem = cfg.requireEnderChestItem;
-		boolean needBlock = cfg.requireNearbyEnderChestBlock;
-		if (!needItem && !needBlock) {
-			return false;
-		}
-		boolean hasItem = !needItem || playerCarriesEnderChest(player);
-		boolean hasBlock = !needBlock || hasLoadedEnderChestNearby(player, level);
-		return hasItem || hasBlock;
+		return switch (cfg.enderChestAccess) {
+			case OFF -> false;
+			case ALWAYS -> true;
+			case BLOCK -> hasLoadedEnderChestNearby(player, level);
+			case ITEM -> playerCarriesEnderChest(player);
+			case BOTH -> playerCarriesEnderChest(player) || hasLoadedEnderChestNearby(player, level);
+		};
 	}
 
 	/**
 	 * Lang key for why {@link #passesGate} failed, or {@code null} when the gate passes or has no user-facing reason.
 	 */
 	public static String failureMessageKey(LuipyUtilsConfig cfg, Player player, Level level) {
-		if (passesGate(cfg, player, level) || cfg.alwaysAllowVirtualOpen) {
+		if (passesGate(cfg, player, level)) {
 			return null;
 		}
-		boolean needItem = cfg.requireEnderChestItem;
-		boolean needBlock = cfg.requireNearbyEnderChestBlock;
-		if (!needItem && !needBlock) {
-			return "luipy-utils-mod.message.ender_gate_no_rules";
-		}
-		if (needItem && !needBlock) {
-			return "luipy-utils-mod.message.ender_gate_need_item";
-		}
-		if (!needItem) {
-			return "luipy-utils-mod.message.ender_gate_need_block";
-		}
-		return "luipy-utils-mod.message.ender_gate_need_item_or_block";
+		return switch (cfg.enderChestAccess) {
+			case OFF, ALWAYS -> null;
+			case ITEM -> "luipy-utils-mod.message.ender_gate_need_item";
+			case BLOCK -> "luipy-utils-mod.message.ender_gate_need_block";
+			case BOTH -> "luipy-utils-mod.message.ender_gate_need_item_or_block";
+		};
 	}
 }

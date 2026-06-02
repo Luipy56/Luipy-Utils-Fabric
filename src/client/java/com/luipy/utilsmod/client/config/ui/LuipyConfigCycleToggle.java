@@ -1,77 +1,100 @@
 package com.luipy.utilsmod.client.config.ui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import java.util.List;
+import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /**
- * On/Off config toggle with vanilla button styling and green (on) / red (off) label text.
+ * Multi-option config toggle (cycles on click) with vanilla button styling.
  */
-public final class LuipyConfigOnOffToggle extends AbstractButton {
+public final class LuipyConfigCycleToggle<T> extends AbstractButton {
 	private static final int TEXTURE_Y_OFFSET = 46;
 	private static final int TEXTURE_HEIGHT = 20;
-	private static final int COLOR_ON_TEXT = 0xFF88FF88;
 	private static final int COLOR_OFF_TEXT = 0xFFFF8888;
+	private static final int COLOR_ON_TEXT = 0xFF88FF88;
+	private static final int COLOR_NEUTRAL_TEXT = 0xFFCCCCCC;
 	private static final int COLOR_DISABLED_TEXT = 0xFFA0A0A0;
 
-	private boolean value;
+	private T value;
+	private final List<T> values;
+	private final Function<T, Component> valueLabel;
+	private final Function<T, Integer> valueColor;
 	private final Component optionLabel;
-	private final OnValueChange onValueChange;
+	private final OnValueChange<T> onValueChange;
 
 	@FunctionalInterface
-	public interface OnValueChange {
-		void onValueChange(LuipyConfigOnOffToggle button, boolean value);
+	public interface OnValueChange<T> {
+		void onValueChange(LuipyConfigCycleToggle<T> button, T value);
 	}
 
-	private LuipyConfigOnOffToggle(
+	private LuipyConfigCycleToggle(
 		int x,
 		int y,
 		int width,
 		int height,
-		boolean initialValue,
+		T initialValue,
+		List<T> values,
+		Function<T, Component> valueLabel,
+		Function<T, Integer> valueColor,
 		Component optionLabel,
-		OnValueChange onValueChange
+		OnValueChange<T> onValueChange
 	) {
-		super(x, y, width, height, valueText(initialValue));
+		super(x, y, width, height, valueLabel.apply(initialValue));
 		this.value = initialValue;
+		this.values = values;
+		this.valueLabel = valueLabel;
+		this.valueColor = valueColor;
 		this.optionLabel = optionLabel;
 		this.onValueChange = onValueChange;
 	}
 
-	public static LuipyConfigOnOffToggle create(
+	public static <T> LuipyConfigCycleToggle<T> create(
 		int x,
 		int y,
 		int width,
 		int height,
-		boolean initialValue,
+		T initialValue,
+		List<T> values,
+		Function<T, Component> valueLabel,
+		Function<T, Integer> valueColor,
 		Component optionLabel,
-		OnValueChange onValueChange
+		OnValueChange<T> onValueChange
 	) {
-		return new LuipyConfigOnOffToggle(x, y, width, height, initialValue, optionLabel, onValueChange);
+		return new LuipyConfigCycleToggle<>(
+			x,
+			y,
+			width,
+			height,
+			initialValue,
+			values,
+			valueLabel,
+			valueColor,
+			optionLabel,
+			onValueChange
+		);
 	}
 
-	public boolean getValue() {
+	public T getValue() {
 		return this.value;
 	}
 
-	public void setValue(boolean value) {
+	public void setValue(T value) {
 		this.value = value;
-		this.setMessage(valueText(value));
-	}
-
-	private static Component valueText(boolean on) {
-		return on ? CommonComponents.OPTION_ON : CommonComponents.OPTION_OFF;
+		this.setMessage(this.valueLabel.apply(value));
 	}
 
 	@Override
 	public void onPress() {
-		this.setValue(!this.value);
+		int index = this.values.indexOf(this.value);
+		int nextIndex = index < 0 ? 0 : (index + 1) % this.values.size();
+		this.setValue(this.values.get(nextIndex));
 		this.onValueChange.onValueChange(this, this.value);
 	}
 
@@ -97,7 +120,7 @@ public final class LuipyConfigOnOffToggle extends AbstractButton {
 		graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
 		int textColor = this.active
-			? (this.value ? COLOR_ON_TEXT : COLOR_OFF_TEXT)
+			? this.valueColor.apply(this.value)
 			: COLOR_DISABLED_TEXT;
 		this.renderString(graphics, minecraft.font, textColor | Mth.ceil(this.alpha * 255.0F) << 24);
 	}
@@ -118,5 +141,21 @@ public final class LuipyConfigOnOffToggle extends AbstractButton {
 			NarratedElementType.TITLE,
 			Component.translatable("narration.cycle_button.usage", this.optionLabel, this.getMessage())
 		);
+	}
+
+	public static <T> Function<T, Integer> offNeutralAlwaysColors(T offValue, T alwaysValue) {
+		return value -> {
+			if (value.equals(offValue)) {
+				return COLOR_OFF_TEXT;
+			}
+			if (value.equals(alwaysValue)) {
+				return COLOR_ON_TEXT;
+			}
+			return COLOR_NEUTRAL_TEXT;
+		};
+	}
+
+	public static <T> Function<T, Integer> enderAccessColors(T offValue, T alwaysValue) {
+		return offNeutralAlwaysColors(offValue, alwaysValue);
 	}
 }

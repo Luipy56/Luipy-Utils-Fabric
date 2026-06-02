@@ -138,7 +138,7 @@ public class LuipyUnifiedScreen extends EffectRenderingInventoryScreen<LuipyUnif
 				continue;
 			}
 			int panelY = workstationY + range.panelTop();
-			graphics.blit(workstationTexture(kind), x, panelY, 0, 0, 176, kind.panelHeight, 256, 256);
+			graphics.blit(workstationTexture(kind), x, panelY, 0, 0, 176, kind.layoutHeight(), 256, 256);
 		}
 
 		if (this.menu.withEnder) {

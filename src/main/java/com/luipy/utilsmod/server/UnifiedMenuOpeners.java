@@ -15,7 +15,7 @@ public final class UnifiedMenuOpeners {
 	 * Opens {@link LuipyUnifiedMenu} after {@code C2S_OPEN_UNIFIED_MENU}.
 	 * <p>
 	 * We intentionally do <strong>not</strong> re-run {@link com.luipy.utilsmod.ender.EnderGateEvaluation} here:
-	 * the client already applied item / block / {@code alwaysAllowVirtualOpen} gates before sending the packet.
+	 * the client already applied ender access gates before sending the packet.
 	 */
 	public static void tryOpenFor(ServerPlayer player) {
 		if (player.isCreative()) {

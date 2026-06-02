@@ -1,7 +1,5 @@
 package com.luipy.utilsmod.config;
 
-import com.google.gson.annotations.SerializedName;
-
 /**
  * Persisted mod configuration (JSON). Loaded on both logical server and client.
  */
@@ -11,18 +9,11 @@ public final class LuipyUtilsConfig {
 	public static final String DEFAULT_HIGHLIGHT_BLOCK_IDS = "redstone_ore, gravel, clay";
 
 	public boolean masterEnabled = true;
-	/** When true, the unified menu (Alt+R) includes a 3×9 ender chest panel (requires mod on server). */
-	@SerializedName(value = "showEnderChestWithInventory", alternate = { "replaceInventoryWithEnderChest" })
-	public boolean showEnderChestWithInventory = true;
-	/** When true, item/block gates below are ignored for opening (server still validates). */
-	public boolean alwaysAllowVirtualOpen = false;
-	/** When {@link #alwaysAllowVirtualOpen} is false: require holding an ender chest item (OR with block). */
-	public boolean requireEnderChestItem = true;
-	/** When {@link #alwaysAllowVirtualOpen} is false: require a loaded ender chest block nearby (OR with item). */
-	public boolean requireNearbyEnderChestBlock = true;
-	public boolean showToastsOnFailure = true;
+	/** Ender chest panel access mode in the unified menu (Alt+R). */
+	public EnderChestAccessMode enderChestAccess = EnderChestAccessMode.BOTH;
 	/** When true, show an ender chest icon left of the hotbar when ender access in the unified menu is available. */
 	public boolean showEnderGateHudIndicator = true;
+	public boolean showToastsOnFailure = true;
 	/** When true, hovering an enchantment table option shows ALL enchantments that will be applied. */
 	public boolean showEnchantmentPreview = true;
 	/** When true, shift+right-clicking a shulker box in your inventory opens it as a container. */
@@ -31,24 +22,13 @@ public final class LuipyUtilsConfig {
 	public boolean showCraftingTableWithInventory = false;
 
 	// Workstation panels (left column) — all default off (opt-in).
-	public boolean showAnvilWithInventory = false;
-	public boolean anvilAlwaysAvailable = false;
-	public boolean anvilRequireNearbyBlock = true;
-	public boolean showSmithingTableWithInventory = false;
-	public boolean smithingTableAlwaysAvailable = false;
-	public boolean smithingTableRequireNearbyBlock = true;
-	public boolean showCartographyTableWithInventory = false;
-	public boolean cartographyTableAlwaysAvailable = false;
-	public boolean cartographyTableRequireNearbyBlock = true;
-	public boolean showGrindstoneWithInventory = false;
-	public boolean grindstoneAlwaysAvailable = false;
-	public boolean grindstoneRequireNearbyBlock = true;
-	public boolean showStonecutterWithInventory = false;
-	public boolean stonecutterAlwaysAvailable = false;
-	public boolean stonecutterRequireNearbyBlock = true;
-	public boolean showLoomWithInventory = false;
-	public boolean loomAlwaysAvailable = false;
-	public boolean loomRequireNearbyBlock = true;
+	public WorkstationAccessMode anvilAccess = WorkstationAccessMode.OFF;
+	public WorkstationAccessMode smithingAccess = WorkstationAccessMode.OFF;
+	public WorkstationAccessMode cartographyAccess = WorkstationAccessMode.OFF;
+	public WorkstationAccessMode grindstoneAccess = WorkstationAccessMode.OFF;
+	public WorkstationAccessMode stonecutterAccess = WorkstationAccessMode.OFF;
+	public WorkstationAccessMode loomAccess = WorkstationAccessMode.OFF;
+
 	/** When true, matching blocks from the active highlight profile are outlined in the world (client-only). */
 	public boolean blockHighlightEnabled = false;
 	/**

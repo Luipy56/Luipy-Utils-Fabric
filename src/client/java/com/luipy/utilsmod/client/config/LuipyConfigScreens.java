@@ -1,5 +1,6 @@
 package com.luipy.utilsmod.client.config;
 
+import com.luipy.utilsmod.config.EnderChestAccessMode;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
 import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
@@ -25,24 +26,18 @@ public final class LuipyConfigScreens {
 			.setSaveConsumer(v -> cfg.masterEnabled = v)
 			.build());
 
-		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.show_ender_with_inventory"), cfg.showEnderChestWithInventory)
-			.setDefaultValue(true)
-			.setSaveConsumer(v -> cfg.showEnderChestWithInventory = v)
+		general.addEntry(eb.startEnumSelector(
+			Component.translatable("luipy-utils-mod.config.ender_chest.access"),
+			EnderChestAccessMode.class,
+			cfg.enderChestAccess
+		)
+			.setDefaultValue(EnderChestAccessMode.BOTH)
+			.setSaveConsumer(v -> cfg.enderChestAccess = v)
 			.build());
 
-		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.always_virtual"), cfg.alwaysAllowVirtualOpen)
-			.setDefaultValue(false)
-			.setSaveConsumer(v -> cfg.alwaysAllowVirtualOpen = v)
-			.build());
-
-		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.require_item"), cfg.requireEnderChestItem)
+		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.show_ender_gate_hud"), cfg.showEnderGateHudIndicator)
 			.setDefaultValue(true)
-			.setSaveConsumer(v -> cfg.requireEnderChestItem = v)
-			.build());
-
-		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.require_block"), cfg.requireNearbyEnderChestBlock)
-			.setDefaultValue(true)
-			.setSaveConsumer(v -> cfg.requireNearbyEnderChestBlock = v)
+			.setSaveConsumer(v -> cfg.showEnderGateHudIndicator = v)
 			.build());
 
 		general.addEntry(eb.startBooleanToggle(Component.translatable("luipy-utils-mod.config.show_toasts"), cfg.showToastsOnFailure)

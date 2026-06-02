@@ -1,6 +1,7 @@
 package com.luipy.utilsmod.inventory.workstation;
 
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
+import com.luipy.utilsmod.config.WorkstationAccessMode;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import net.minecraft.world.level.block.Block;
@@ -14,126 +15,74 @@ public enum WorkstationKind {
 	ANVIL(
 		Blocks.ANVIL,
 		84,
-		cfg -> cfg.showAnvilWithInventory,
-		cfg -> cfg.anvilAlwaysAvailable,
-		cfg -> cfg.anvilRequireNearbyBlock,
-		(cfg, v) -> cfg.showAnvilWithInventory = v,
-		(cfg, v) -> cfg.anvilAlwaysAvailable = v,
-		(cfg, v) -> cfg.anvilRequireNearbyBlock = v
+		cfg -> cfg.anvilAccess,
+		(cfg, mode) -> cfg.anvilAccess = mode
 	),
 	SMITHING(
 		Blocks.SMITHING_TABLE,
 		84,
-		cfg -> cfg.showSmithingTableWithInventory,
-		cfg -> cfg.smithingTableAlwaysAvailable,
-		cfg -> cfg.smithingTableRequireNearbyBlock,
-		(cfg, v) -> cfg.showSmithingTableWithInventory = v,
-		(cfg, v) -> cfg.smithingTableAlwaysAvailable = v,
-		(cfg, v) -> cfg.smithingTableRequireNearbyBlock = v
+		cfg -> cfg.smithingAccess,
+		(cfg, mode) -> cfg.smithingAccess = mode
 	),
 	CARTOGRAPHY(
 		Blocks.CARTOGRAPHY_TABLE,
 		84,
-		cfg -> cfg.showCartographyTableWithInventory,
-		cfg -> cfg.cartographyTableAlwaysAvailable,
-		cfg -> cfg.cartographyTableRequireNearbyBlock,
-		(cfg, v) -> cfg.showCartographyTableWithInventory = v,
-		(cfg, v) -> cfg.cartographyTableAlwaysAvailable = v,
-		(cfg, v) -> cfg.cartographyTableRequireNearbyBlock = v
+		cfg -> cfg.cartographyAccess,
+		(cfg, mode) -> cfg.cartographyAccess = mode
 	),
 	GRINDSTONE(
 		Blocks.GRINDSTONE,
 		79,
-		cfg -> cfg.showGrindstoneWithInventory,
-		cfg -> cfg.grindstoneAlwaysAvailable,
-		cfg -> cfg.grindstoneRequireNearbyBlock,
-		(cfg, v) -> cfg.showGrindstoneWithInventory = v,
-		(cfg, v) -> cfg.grindstoneAlwaysAvailable = v,
-		(cfg, v) -> cfg.grindstoneRequireNearbyBlock = v
+		cfg -> cfg.grindstoneAccess,
+		(cfg, mode) -> cfg.grindstoneAccess = mode
 	),
 	STONECUTTER(
 		Blocks.STONECUTTER,
 		84,
-		cfg -> cfg.showStonecutterWithInventory,
-		cfg -> cfg.stonecutterAlwaysAvailable,
-		cfg -> cfg.stonecutterRequireNearbyBlock,
-		(cfg, v) -> cfg.showStonecutterWithInventory = v,
-		(cfg, v) -> cfg.stonecutterAlwaysAvailable = v,
-		(cfg, v) -> cfg.stonecutterRequireNearbyBlock = v
+		cfg -> cfg.stonecutterAccess,
+		(cfg, mode) -> cfg.stonecutterAccess = mode
 	),
 	LOOM(
 		Blocks.LOOM,
 		84,
-		cfg -> cfg.showLoomWithInventory,
-		cfg -> cfg.loomAlwaysAvailable,
-		cfg -> cfg.loomRequireNearbyBlock,
-		(cfg, v) -> cfg.showLoomWithInventory = v,
-		(cfg, v) -> cfg.loomAlwaysAvailable = v,
-		(cfg, v) -> cfg.loomRequireNearbyBlock = v
+		cfg -> cfg.loomAccess,
+		(cfg, mode) -> cfg.loomAccess = mode
 	);
+
+	/** Pixels trimmed from the bottom of each panel blit (decorative strip below workstation slots). */
+	public static final int PANEL_BOTTOM_TRIM = 2;
 
 	public final Block block;
 	public final int panelHeight;
-	private final Function<LuipyUtilsConfig, Boolean> showGetter;
-	private final Function<LuipyUtilsConfig, Boolean> alwaysAvailableGetter;
-	private final Function<LuipyUtilsConfig, Boolean> requireNearbyGetter;
-	private final BiConsumer<LuipyUtilsConfig, Boolean> showSetter;
-	private final BiConsumer<LuipyUtilsConfig, Boolean> alwaysAvailableSetter;
-	private final BiConsumer<LuipyUtilsConfig, Boolean> requireNearbySetter;
+	private final Function<LuipyUtilsConfig, WorkstationAccessMode> accessGetter;
+	private final BiConsumer<LuipyUtilsConfig, WorkstationAccessMode> accessSetter;
 
 	WorkstationKind(
 		Block block,
 		int panelHeight,
-		Function<LuipyUtilsConfig, Boolean> showGetter,
-		Function<LuipyUtilsConfig, Boolean> alwaysAvailableGetter,
-		Function<LuipyUtilsConfig, Boolean> requireNearbyGetter,
-		BiConsumer<LuipyUtilsConfig, Boolean> showSetter,
-		BiConsumer<LuipyUtilsConfig, Boolean> alwaysAvailableSetter,
-		BiConsumer<LuipyUtilsConfig, Boolean> requireNearbySetter
+		Function<LuipyUtilsConfig, WorkstationAccessMode> accessGetter,
+		BiConsumer<LuipyUtilsConfig, WorkstationAccessMode> accessSetter
 	) {
 		this.block = block;
 		this.panelHeight = panelHeight;
-		this.showGetter = showGetter;
-		this.alwaysAvailableGetter = alwaysAvailableGetter;
-		this.requireNearbyGetter = requireNearbyGetter;
-		this.showSetter = showSetter;
-		this.alwaysAvailableSetter = alwaysAvailableSetter;
-		this.requireNearbySetter = requireNearbySetter;
+		this.accessGetter = accessGetter;
+		this.accessSetter = accessSetter;
 	}
 
-	public boolean showEnabled(LuipyUtilsConfig cfg) {
-		return showGetter.apply(cfg);
+	public WorkstationAccessMode accessMode(LuipyUtilsConfig cfg) {
+		return accessGetter.apply(cfg);
 	}
 
-	public boolean alwaysAvailable(LuipyUtilsConfig cfg) {
-		return alwaysAvailableGetter.apply(cfg);
+	public void setAccessMode(LuipyUtilsConfig cfg, WorkstationAccessMode mode) {
+		accessSetter.accept(cfg, mode);
 	}
 
-	public boolean requireNearbyBlock(LuipyUtilsConfig cfg) {
-		return requireNearbyGetter.apply(cfg);
+	/** Height used for blit and vertical stacking (excludes {@link #PANEL_BOTTOM_TRIM}). */
+	public int layoutHeight() {
+		return this.panelHeight - PANEL_BOTTOM_TRIM;
 	}
 
-	public void setShow(LuipyUtilsConfig cfg, boolean value) {
-		showSetter.accept(cfg, value);
-	}
-
-	public void setAlwaysAvailable(LuipyUtilsConfig cfg, boolean value) {
-		alwaysAvailableSetter.accept(cfg, value);
-	}
-
-	public void setRequireNearbyBlock(LuipyUtilsConfig cfg, boolean value) {
-		requireNearbySetter.accept(cfg, value);
-	}
-
-	public String showConfigKey() {
-		return "luipy-utils-mod.config.workstation." + name().toLowerCase() + ".show";
-	}
-
-	public String alwaysConfigKey() {
-		return "luipy-utils-mod.config.workstation." + name().toLowerCase() + ".always";
-	}
-
-	public String nearbyConfigKey() {
-		return "luipy-utils-mod.config.workstation." + name().toLowerCase() + ".nearby";
+	public String accessConfigKey() {
+		return "luipy-utils-mod.config.workstation." + name().toLowerCase() + ".access";
 	}
 }
