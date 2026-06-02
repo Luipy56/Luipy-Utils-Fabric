@@ -3,3 +3,19 @@ accessWidener v2 named
 accessible method net/minecraft/world/inventory/CraftingMenu slotChangedCraftingGrid (Lnet/minecraft/world/inventory/AbstractContainerMenu;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/inventory/CraftingContainer;Lnet/minecraft/world/inventory/ResultContainer;)V
 
 accessible method net/minecraft/client/gui/screens/MenuScreens register (Lnet/minecraft/world/inventory/MenuType;Lnet/minecraft/client/gui/screens/MenuScreens$ScreenConstructor;)V
+
+accessible field net/minecraft/world/inventory/AnvilMenu cost Lnet/minecraft/world/inventory/DataSlot;
+accessible field net/minecraft/world/inventory/CartographyTableMenu resultContainer Lnet/minecraft/world/inventory/ResultContainer;
+accessible field net/minecraft/world/inventory/GrindstoneMenu repairSlots Lnet/minecraft/world/Container;
+accessible field net/minecraft/world/inventory/GrindstoneMenu resultSlots Lnet/minecraft/world/Container;
+accessible field net/minecraft/world/inventory/StonecutterMenu resultContainer Lnet/minecraft/world/inventory/ResultContainer;
+accessible field net/minecraft/world/inventory/StonecutterMenu selectedRecipeIndex Lnet/minecraft/world/inventory/DataSlot;
+accessible field net/minecraft/world/inventory/StonecutterMenu inputSlot Lnet/minecraft/world/inventory/Slot;
+accessible method net/minecraft/world/inventory/StonecutterMenu setupResultSlot ()V
+accessible field net/minecraft/world/inventory/LoomMenu inputContainer Lnet/minecraft/world/Container;
+accessible field net/minecraft/world/inventory/LoomMenu outputContainer Lnet/minecraft/world/Container;
+accessible field net/minecraft/world/inventory/LoomMenu selectedBannerPatternIndex Lnet/minecraft/world/inventory/DataSlot;
+accessible field net/minecraft/world/inventory/LoomMenu bannerSlot Lnet/minecraft/world/inventory/Slot;
+accessible field net/minecraft/world/inventory/LoomMenu dyeSlot Lnet/minecraft/world/inventory/Slot;
+
+accessible method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen renderSlot (Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/inventory/Slot;)V

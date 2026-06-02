@@ -27,15 +27,19 @@ public final class LuipyUtilsConfigManager {
 		Path path = configPath();
 		if (!Files.isRegularFile(path)) {
 			instance = new LuipyUtilsConfig();
+			instance.ensureProfilesInitialized();
 			save();
 			return;
 		}
 		try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
 			LuipyUtilsConfig read = GSON.fromJson(reader, LuipyUtilsConfig.class);
 			instance = read != null ? read : new LuipyUtilsConfig();
+			instance.ensureProfilesInitialized();
+			instance.migrateLegacyBlockHighlightIds();
 		} catch (Exception e) {
 			LuipyUtilsMod.LOGGER.warn("Failed to load config, using defaults", e);
 			instance = new LuipyUtilsConfig();
+			instance.ensureProfilesInitialized();
 		}
 	}
 

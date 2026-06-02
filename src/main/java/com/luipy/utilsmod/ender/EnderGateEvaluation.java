@@ -62,4 +62,25 @@ public final class EnderGateEvaluation {
 		boolean hasBlock = !needBlock || hasLoadedEnderChestNearby(player, level);
 		return hasItem || hasBlock;
 	}
+
+	/**
+	 * Lang key for why {@link #passesGate} failed, or {@code null} when the gate passes or has no user-facing reason.
+	 */
+	public static String failureMessageKey(LuipyUtilsConfig cfg, Player player, Level level) {
+		if (passesGate(cfg, player, level) || cfg.alwaysAllowVirtualOpen) {
+			return null;
+		}
+		boolean needItem = cfg.requireEnderChestItem;
+		boolean needBlock = cfg.requireNearbyEnderChestBlock;
+		if (!needItem && !needBlock) {
+			return "luipy-utils-mod.message.ender_gate_no_rules";
+		}
+		if (needItem && !needBlock) {
+			return "luipy-utils-mod.message.ender_gate_need_item";
+		}
+		if (!needItem) {
+			return "luipy-utils-mod.message.ender_gate_need_block";
+		}
+		return "luipy-utils-mod.message.ender_gate_need_item_or_block";
+	}
 }

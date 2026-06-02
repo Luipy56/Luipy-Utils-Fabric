@@ -1,5 +1,6 @@
 package com.luipy.utilsmod.client.mixin;
 
+import com.luipy.utilsmod.client.LuipyClientMessages;
 import com.luipy.utilsmod.client.LuipyClientState;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
 import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
@@ -43,16 +44,34 @@ public abstract class ShulkerOpenMixin extends Screen {
 		if (slot == null || !slot.hasItem()) return;
 		if (!(slot.container instanceof Inventory)) return;
 
-		if (!menu.getCarried().isEmpty()) return;
-
 		ItemStack stack = slot.getItem();
 		if (!(Block.byItem(stack.getItem()) instanceof ShulkerBoxBlock)) return;
 
-		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
-		if (!cfg.masterEnabled || !cfg.allowOpenShulkerFromInventory) return;
-
 		Minecraft mc = Minecraft.getInstance();
-		if (!LuipyClientState.serverHasLuipyMod() && mc.getSingleplayerServer() == null) return;
+
+		if (!menu.getCarried().isEmpty()) {
+			LuipyClientMessages.featureFailure(mc, "luipy-utils-mod.message.shulker_carrying_item");
+			return;
+		}
+
+		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
+		if (!cfg.masterEnabled) {
+			return;
+		}
+		if (!cfg.allowOpenShulkerFromInventory) {
+			LuipyClientMessages.featureFailure(mc, "luipy-utils-mod.message.shulker_feature_disabled");
+			return;
+		}
+
+		if (!LuipyClientState.serverHasLuipyMod() && mc.getSingleplayerServer() == null) {
+			LuipyClientMessages.featureFailure(mc, "luipy-utils-mod.message.shulker_requires_mod_on_server");
+			return;
+		}
+
+		if (mc.player != null && mc.player.isSpectator()) {
+			LuipyClientMessages.featureFailure(mc, "luipy-utils-mod.message.shulker_spectator");
+			return;
+		}
 
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeInt(slot.index);

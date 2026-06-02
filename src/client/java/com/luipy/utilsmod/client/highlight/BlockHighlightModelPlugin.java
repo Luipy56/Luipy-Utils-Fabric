@@ -9,6 +9,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Registers Fabric model overrides for configured highlight blocks during each client resource reload.
+ *
+ * <p>Each highlighted state uses a composite model: the vanilla block model as the base layer and a
+ * shared emphasis frame texture drawn on top. Transparent pixels in the emphasis texture leave the
+ * original block visible in the center.
  */
 public final class BlockHighlightModelPlugin {
 	static final ResourceLocation EMPHASIS_MODEL = new ResourceLocation("luipy-utils-mod", "block/highlight/emphasis");
@@ -31,7 +35,8 @@ public final class BlockHighlightModelPlugin {
 	private static void resolveHighlightStates(BlockStateResolver.Context context) {
 		UnbakedModel emphasis = context.getOrLoadModel(EMPHASIS_MODEL);
 		for (BlockState state : context.block().getStateDefinition().getPossibleStates()) {
-			context.setModel(state, emphasis);
+			UnbakedModel base = VanillaBlockModelLookup.resolveBaseModel(context, state);
+			context.setModel(state, new HighlightCompositeUnbakedModel(base, emphasis));
 		}
 	}
 }

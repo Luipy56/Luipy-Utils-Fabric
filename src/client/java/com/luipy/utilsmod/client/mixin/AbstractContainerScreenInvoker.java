@@ -9,4 +9,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface AbstractContainerScreenInvoker {
 	@Invoker("findSlot")
 	Slot luipy$findSlot(double mouseX, double mouseY);
+
+	@Invoker("renderSlot")
+	void luipy$renderSlot(net.minecraft.client.gui.GuiGraphics graphics, Slot slot);
 }

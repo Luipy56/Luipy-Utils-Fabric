@@ -1,16 +1,22 @@
 package com.luipy.utilsmod.client.config.ui;
 
 import com.luipy.utilsmod.client.highlight.BlockHighlightManager;
+import com.luipy.utilsmod.client.highlight.HighlightEmphasisTextures;
+import com.luipy.utilsmod.client.highlight.HighlightTextureFileChooser;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
 import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * First-party in-game config screen (masa-style category sidebar + scrolling option rows).
@@ -20,10 +26,17 @@ public class LuipyConfigScreen extends Screen {
 	private static final int SIDEBAR_WIDTH = 130;
 	private static final int CONTENT_PADDING = 10;
 	private static final int ROW_HEIGHT = 40;
+	private static final int ICON_SIZE = 16;
+	private static final int ICON_TEXT_GAP = 22;
 	private static final int FOOTER_HEIGHT = 36;
 	private static final int TOGGLE_WIDTH = 80;
-	private static final int WORLD_EXTRA_HEIGHT = 65;
-	private static final int BLOCK_IDS_FIELD_GAP = 16;
+	private static final int TEXTURE_PREVIEW_SIZE = 48;
+	private static final int PROFILE_NAME_HEIGHT = 24;
+	private static final int PROFILE_CONTROLS_HEIGHT = 28;
+	private static final int PROFILE_IDS_HEIGHT = 44;
+	private static final int PROFILE_TEXTURE_HEIGHT = 78;
+	private static final int PROFILE_SECTION_HEIGHT =
+		PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + PROFILE_TEXTURE_HEIGHT + 8;
 
 	private final Screen parent;
 	private final LuipyUtilsConfig config;
@@ -35,25 +48,38 @@ public class LuipyConfigScreen extends Screen {
 	private int contentRight;
 	private int maxScroll;
 	private final List<CycleButton<Boolean>> toggleButtons = new ArrayList<>();
-	private EditBox blockIdsField;
-	private final String initialBlockHighlightIds;
+	private final EditBox[] profileNameFields = new EditBox[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
+	private final EditBox[] profileBlockIdFields = new EditBox[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
+	private final String[] initialProfileBlockIds = new String[LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT];
 	private boolean visitedWorldTab;
 
 	public LuipyConfigScreen(Screen parent) {
 		super(Component.translatable("luipy-utils-mod.config.title"));
 		this.parent = parent;
 		this.config = LuipyUtilsConfigManager.get();
-		this.initialBlockHighlightIds = normalizeBlockHighlightIds(this.config.blockHighlightIds);
+		this.config.ensureProfilesInitialized();
+		for (int i = 0; i < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; i++) {
+			this.initialProfileBlockIds[i] = normalizeBlockHighlightIds(this.config.blockHighlightProfiles[i].blockIds);
+		}
+		HighlightEmphasisTextures.onConfigScreenOpened();
 	}
 
 	public static Screen create(Screen parent) {
 		return new LuipyConfigScreen(parent);
 	}
 
+	/** Called after async texture upload so the World tab preview can refresh. */
+	public void onHighlightTextureChanged() {
+		HighlightEmphasisTextures.onConfigScreenOpened();
+		this.init();
+	}
+
 	@Override
 	protected void init() {
 		this.toggleButtons.clear();
 		this.clearWidgets();
+		Arrays.fill(this.profileNameFields, null);
+		Arrays.fill(this.profileBlockIdFields, null);
 		this.computeContentBounds();
 		this.rebuildSidebar();
 		this.rebuildContentWidgets();
@@ -72,22 +98,22 @@ public class LuipyConfigScreen extends Screen {
 		int y = CONTENT_PADDING + 8;
 		for (LuipyConfigCategory category : LuipyConfigCategory.values()) {
 			LuipyConfigCategory cat = category;
-			boolean selected = cat == this.selectedCategory;
 			this.addRenderableWidget(
 				Button.builder(category.title(), btn -> this.selectCategory(cat))
 					.bounds(CONTENT_PADDING, y, SIDEBAR_WIDTH - CONTENT_PADDING * 2, 20)
 					.build()
 			);
-			if (selected) {
-				// Highlight handled in render pass via selectedCategory.
-			}
 			y += 24;
 		}
 	}
 
 	private void selectCategory(LuipyConfigCategory category) {
+		if (this.selectedCategory == LuipyConfigCategory.WORLD && category != LuipyConfigCategory.WORLD) {
+			HighlightEmphasisTextures.onConfigScreenClosed();
+		}
 		if (category == LuipyConfigCategory.WORLD) {
 			this.visitedWorldTab = true;
+			HighlightEmphasisTextures.onConfigScreenOpened();
 		}
 		this.selectedCategory = category;
 		this.scrollOffset = 0;
@@ -142,25 +168,99 @@ public class LuipyConfigScreen extends Screen {
 			y += ROW_HEIGHT;
 		}
 
-		int fieldY = this.contentTop + ROW_HEIGHT + 12 + BLOCK_IDS_FIELD_GAP + 9 - (int) this.scrollOffset;
+		int profileStartY = this.contentTop + ROW_HEIGHT - (int) this.scrollOffset;
 		int fieldWidth = this.contentRight - this.contentLeft - 8;
-		if (fieldY + 52 >= this.contentTop && fieldY <= this.contentBottom) {
-			this.blockIdsField = new EditBox(
-				this.font,
-				this.contentLeft,
-				fieldY,
-				fieldWidth,
-				20,
-				Component.translatable("luipy-utils-mod.config.block_highlight_ids")
-			);
-			this.blockIdsField.setMaxLength(2048);
-			this.blockIdsField.setValue(this.config.blockHighlightIds);
-			this.blockIdsField.setHint(Component.translatable("luipy-utils-mod.config.block_highlight_ids.hint"));
-			this.addRenderableWidget(this.blockIdsField);
+		int halfWidth = Math.max(80, (fieldWidth - 8) / 2);
+
+		for (int profileIndex = 0; profileIndex < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; profileIndex++) {
+			LuipyUtilsConfig.HighlightProfile profile = this.config.blockHighlightProfiles[profileIndex];
+			int sectionY = profileStartY + profileIndex * PROFILE_SECTION_HEIGHT;
+
+			int nameY = sectionY;
+			if (nameY + PROFILE_NAME_HEIGHT >= this.contentTop && nameY <= this.contentBottom) {
+				EditBox nameField = new EditBox(
+					this.font,
+					this.contentLeft,
+					nameY,
+					fieldWidth,
+					20,
+					Component.translatable("luipy-utils-mod.config.block_highlight.profile_name")
+				);
+				nameField.setMaxLength(32);
+				nameField.setValue(profile.name != null ? profile.name : "");
+				this.profileNameFields[profileIndex] = nameField;
+				this.addRenderableWidget(nameField);
+			}
+
+			int controlsY = sectionY + PROFILE_NAME_HEIGHT;
+			if (controlsY + PROFILE_CONTROLS_HEIGHT >= this.contentTop && controlsY <= this.contentBottom) {
+				final int idx = profileIndex;
+				boolean isActive = this.config.activeBlockHighlightProfile == profileIndex;
+				this.addRenderableWidget(
+					Button.builder(
+						isActive
+							? Component.translatable("luipy-utils-mod.config.block_highlight.profile_active")
+							: Component.translatable("luipy-utils-mod.config.block_highlight.profile_select"),
+						btn -> this.selectActiveProfile(idx)
+					).bounds(this.contentLeft, controlsY, halfWidth, 20).build()
+				);
+				CycleButton<Boolean> enabledToggle = CycleButton.onOffBuilder(profile.enabled)
+					.displayOnlyValue()
+					.create(
+						this.contentRight - TOGGLE_WIDTH,
+						controlsY,
+						TOGGLE_WIDTH,
+						20,
+						Component.translatable("luipy-utils-mod.config.block_highlight.profile_enabled"),
+						(btn, value) -> this.config.blockHighlightProfiles[idx].enabled = value
+					);
+				this.toggleButtons.add(enabledToggle);
+				this.addRenderableWidget(enabledToggle);
+			}
+
+			int idsY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + 12;
+			if (idsY + 20 >= this.contentTop && idsY <= this.contentBottom) {
+				EditBox idsField = new EditBox(
+					this.font,
+					this.contentLeft,
+					idsY,
+					fieldWidth,
+					20,
+					Component.translatable("luipy-utils-mod.config.block_highlight_ids")
+				);
+				idsField.setMaxLength(2048);
+				idsField.setValue(profile.blockIds != null ? profile.blockIds : "");
+				idsField.setHint(Component.translatable("luipy-utils-mod.config.block_highlight_ids.hint"));
+				this.profileBlockIdFields[profileIndex] = idsField;
+				this.addRenderableWidget(idsField);
+			}
+
+			int buttonY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + TEXTURE_PREVIEW_SIZE + 6;
+			if (buttonY + 20 >= this.contentTop && buttonY <= this.contentBottom) {
+				final int idx = profileIndex;
+				this.addRenderableWidget(
+					Button.builder(Component.translatable("luipy-utils-mod.config.block_highlight.texture_choose"), btn ->
+						HighlightTextureFileChooser.openAsync(idx)
+					).bounds(this.contentLeft, buttonY, halfWidth, 20).build()
+				);
+				this.addRenderableWidget(
+					Button.builder(Component.translatable("luipy-utils-mod.config.block_highlight.texture_reset"), btn -> {
+						HighlightEmphasisTextures.resetProfileToDefault(idx);
+						this.init();
+					}).bounds(this.contentLeft + halfWidth + 8, buttonY, halfWidth, 20).build()
+				);
+			}
 		}
 
 		int contentHeight = this.contentBottom - this.contentTop;
-		this.maxScroll = Math.max(0, ROW_HEIGHT + WORLD_EXTRA_HEIGHT - contentHeight);
+		int totalHeight = ROW_HEIGHT + LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT * PROFILE_SECTION_HEIGHT;
+		this.maxScroll = Math.max(0, totalHeight - contentHeight);
+	}
+
+	private void selectActiveProfile(int profileIndex) {
+		this.config.activeBlockHighlightProfile = profileIndex;
+		BlockHighlightManager.reloadFromConfig();
+		this.init();
 	}
 
 	private void rebuildFooter() {
@@ -192,16 +292,35 @@ public class LuipyConfigScreen extends Screen {
 	}
 
 	private void saveAndClose() {
-		if (this.visitedWorldTab && this.blockIdsField != null) {
-			String current = this.blockIdsField.getValue();
-			this.config.blockHighlightIds = current;
-			if (!normalizeBlockHighlightIds(current).equals(this.initialBlockHighlightIds)) {
-				BlockHighlightManager.applyFromConfig(current);
+		HighlightEmphasisTextures.onConfigScreenClosed();
+		if (this.visitedWorldTab) {
+			syncWorldTabToConfig();
+			boolean blockIdsChanged = false;
+			for (int i = 0; i < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; i++) {
+				String current = this.config.blockHighlightProfiles[i].blockIds;
+				if (!normalizeBlockHighlightIds(current).equals(this.initialProfileBlockIds[i])) {
+					blockIdsChanged = true;
+					break;
+				}
+			}
+			if (blockIdsChanged) {
+				BlockHighlightManager.applyActiveProfileFromConfig();
 			}
 		}
 		LuipyUtilsConfigManager.save();
 		if (this.minecraft != null) {
 			this.minecraft.setScreen(this.parent);
+		}
+	}
+
+	private void syncWorldTabToConfig() {
+		for (int i = 0; i < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; i++) {
+			if (this.profileNameFields[i] != null) {
+				this.config.blockHighlightProfiles[i].name = this.profileNameFields[i].getValue().trim();
+			}
+			if (this.profileBlockIdFields[i] != null) {
+				this.config.blockHighlightProfiles[i].blockIds = this.profileBlockIdFields[i].getValue();
+			}
 		}
 	}
 
@@ -238,27 +357,66 @@ public class LuipyConfigScreen extends Screen {
 			List<LuipyConfigBooleanEntry> entries = LuipyConfigCategories.forCategory(LuipyConfigCategory.WORLD);
 			for (LuipyConfigBooleanEntry entry : entries) {
 				if (y + ROW_HEIGHT >= this.contentTop && y <= this.contentBottom) {
-					graphics.drawString(this.font, entry.label(), this.contentLeft, y, 0xFFFFFF);
-					graphics.drawString(this.font, entry.description(), this.contentLeft, y + 12, 0x888888);
+					int labelX = this.contentLeft;
+					if (entry.iconItem() != null) {
+						graphics.renderItem(entry.iconItem().getDefaultInstance(), this.contentLeft, y + 2);
+						labelX += ICON_TEXT_GAP;
+					}
+					graphics.drawString(this.font, entry.label(), labelX, y, 0xFFFFFF);
+					graphics.drawString(this.font, entry.description(), labelX, y + 12, 0x888888);
 				}
 				y += ROW_HEIGHT;
 			}
-			int idsLabelY = this.contentTop + ROW_HEIGHT + 4 - (int) this.scrollOffset;
-			if (idsLabelY >= this.contentTop && idsLabelY <= this.contentBottom) {
-				graphics.drawString(
-					this.font,
-					Component.translatable("luipy-utils-mod.config.block_highlight_ids"),
-					this.contentLeft,
-					idsLabelY,
-					0xFFFFFF
-				);
-				graphics.drawString(
-					this.font,
-					Component.translatable("luipy-utils-mod.config.block_highlight_ids.desc"),
-					this.contentLeft,
-					idsLabelY + 12,
-					0x888888
-				);
+
+			int profileStartY = this.contentTop + ROW_HEIGHT - (int) this.scrollOffset;
+			for (int profileIndex = 0; profileIndex < LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT; profileIndex++) {
+				int sectionY = profileStartY + profileIndex * PROFILE_SECTION_HEIGHT;
+				int controlsY = sectionY + PROFILE_NAME_HEIGHT;
+				int idsLabelY = controlsY + PROFILE_CONTROLS_HEIGHT;
+				int textureLabelY = idsLabelY + 28;
+
+				if (controlsY >= this.contentTop && controlsY <= this.contentBottom) {
+					graphics.drawString(
+						this.font,
+						Component.translatable("luipy-utils-mod.config.block_highlight.profile_enabled"),
+						this.contentLeft,
+						controlsY + 6,
+						0x888888
+					);
+				}
+				if (idsLabelY >= this.contentTop && idsLabelY <= this.contentBottom) {
+					graphics.drawString(
+						this.font,
+						Component.translatable("luipy-utils-mod.config.block_highlight_ids"),
+						this.contentLeft,
+						idsLabelY,
+						0xFFFFFF
+					);
+					graphics.drawString(
+						this.font,
+						Component.translatable("luipy-utils-mod.config.block_highlight_ids.desc"),
+						this.contentLeft,
+						idsLabelY + 12,
+						0x888888
+					);
+				}
+				if (textureLabelY >= this.contentTop && textureLabelY <= this.contentBottom) {
+					graphics.drawString(
+						this.font,
+						Component.translatable("luipy-utils-mod.config.block_highlight.texture"),
+						this.contentLeft,
+						textureLabelY,
+						0xFFFFFF
+					);
+					graphics.drawString(
+						this.font,
+						Component.translatable("luipy-utils-mod.config.block_highlight.texture.desc"),
+						this.contentLeft + TEXTURE_PREVIEW_SIZE + 8,
+						textureLabelY,
+						0x888888
+					);
+				}
+				this.renderProfileTexturePreview(graphics, profileIndex, sectionY);
 			}
 			graphics.disableScissor();
 			return;
@@ -275,6 +433,10 @@ public class LuipyConfigScreen extends Screen {
 			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.open_unified_menu"), this.contentLeft, y, 0xCCCCCC);
 			y += 12;
 			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.open_unified_menu.desc"), this.contentLeft, y, 0x888888);
+			y += 20;
+			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.cycle_highlight_profile"), this.contentLeft, y, 0xCCCCCC);
+			y += 12;
+			graphics.drawString(this.font, Component.translatable("luipy-utils-mod.config.keybind.cycle_highlight_profile.desc"), this.contentLeft, y, 0x888888);
 			graphics.disableScissor();
 			return;
 		}
@@ -284,8 +446,13 @@ public class LuipyConfigScreen extends Screen {
 
 		for (LuipyConfigBooleanEntry entry : entries) {
 			if (y + ROW_HEIGHT >= this.contentTop && y <= this.contentBottom) {
-				graphics.drawString(this.font, entry.label(), this.contentLeft, y, 0xFFFFFF);
-				graphics.drawString(this.font, entry.description(), this.contentLeft, y + 12, 0x888888);
+				int labelX = this.contentLeft;
+				if (entry.iconItem() != null) {
+					graphics.renderItem(entry.iconItem().getDefaultInstance(), this.contentLeft, y + 2);
+					labelX += ICON_TEXT_GAP;
+				}
+				graphics.drawString(this.font, entry.label(), labelX, y, 0xFFFFFF);
+				graphics.drawString(this.font, entry.description(), labelX, y + 12, 0x888888);
 			}
 			y += ROW_HEIGHT;
 		}
@@ -322,8 +489,27 @@ public class LuipyConfigScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		HighlightEmphasisTextures.onConfigScreenClosed();
 		if (this.minecraft != null) {
 			this.minecraft.setScreen(this.parent);
 		}
+	}
+
+	private void renderProfileTexturePreview(GuiGraphics graphics, int profileIndex, int sectionY) {
+		int previewX = this.contentLeft;
+		int previewY = sectionY + PROFILE_NAME_HEIGHT + PROFILE_CONTROLS_HEIGHT + PROFILE_IDS_HEIGHT + 8;
+		if (previewY + TEXTURE_PREVIEW_SIZE < this.contentTop || previewY > this.contentBottom) {
+			return;
+		}
+		if (HighlightEmphasisTextures.profilePreviewTexture(profileIndex) == null) {
+			return;
+		}
+		graphics.fill(previewX - 1, previewY - 1, previewX + TEXTURE_PREVIEW_SIZE + 1, previewY + TEXTURE_PREVIEW_SIZE + 1, 0xFF303030);
+		ResourceLocation textureId = HighlightEmphasisTextures.profilePreviewTextureId(profileIndex);
+		int texWidth = HighlightEmphasisTextures.profilePreviewTexture(profileIndex).getPixels().getWidth();
+		int texHeight = HighlightEmphasisTextures.profilePreviewTexture(profileIndex).getPixels().getHeight();
+		RenderSystem.setShader(GameRenderer::getPositionTexShader);
+		RenderSystem.setShaderTexture(0, textureId);
+		graphics.blit(textureId, previewX, previewY, 0, 0, TEXTURE_PREVIEW_SIZE, TEXTURE_PREVIEW_SIZE, texWidth, texHeight);
 	}
 }

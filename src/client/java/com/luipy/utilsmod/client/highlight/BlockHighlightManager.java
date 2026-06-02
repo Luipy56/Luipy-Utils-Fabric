@@ -20,7 +20,8 @@ import net.minecraft.world.level.block.Block;
  * in a {@code HashSet}, and drew wireframe boxes each frame. That collapsed FPS for common blocks (gravel, clay, etc.)
  * and the outlines were not reliably visible on 1.20.1. Highlighting now scales with the number of configured block
  * <em>types</em> only: {@link BlockHighlightModelPlugin} registers Fabric block-state resolvers at reload time that
- * point matching blocks at a shared bright model shipped in mod assets. Toggling off or clearing the list triggers
+ * composite each matching block's vanilla model with a shared emphasis frame overlay shipped in mod assets.
+ * Toggling off or clearing the list triggers
  * {@link Minecraft#reloadResourcePacks()} so vanilla models are restored without restarting.
  */
 public final class BlockHighlightManager {
@@ -38,7 +39,9 @@ public final class BlockHighlightManager {
 
 	public static boolean shouldApplyModelOverrides() {
 		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
-		return cfg.masterEnabled && cfg.blockHighlightEnabled && !targetBlocks.isEmpty();
+		cfg.ensureProfilesInitialized();
+		LuipyUtilsConfig.HighlightProfile active = cfg.activeHighlightProfile();
+		return cfg.masterEnabled && cfg.blockHighlightEnabled && active.enabled && !targetBlocks.isEmpty();
 	}
 
 	public static Set<Block> getTargetBlocks() {
@@ -46,7 +49,9 @@ public final class BlockHighlightManager {
 	}
 
 	public static void reloadFromConfig() {
-		ParseResult result = parseBlockIds(LuipyUtilsConfigManager.get().blockHighlightIds);
+		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
+		cfg.ensureProfilesInitialized();
+		ParseResult result = parseBlockIds(cfg.activeHighlightProfile().blockIds);
 		targetBlocks = result.blocks();
 		if (!suppressResourceRefresh) {
 			refreshClientResources();
@@ -54,16 +59,56 @@ public final class BlockHighlightManager {
 	}
 
 	/**
-	 * Re-parses the raw id list from config, persists config, reloads client block models, and reports in chat.
+	 * Re-parses the active profile block list, persists config, reloads client block models, and reports in chat.
 	 */
-	public static void applyFromConfig(String rawIds) {
+	public static void applyActiveProfileFromConfig() {
 		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
-		cfg.blockHighlightIds = rawIds != null ? rawIds : "";
-		ParseResult result = parseBlockIds(cfg.blockHighlightIds);
+		cfg.ensureProfilesInitialized();
+		LuipyUtilsConfig.HighlightProfile active = cfg.activeHighlightProfile();
+		ParseResult result = parseBlockIds(active.blockIds);
+		targetBlocks = result.blocks();
+		LuipyUtilsConfigManager.save();
+		refreshClientResources();
+		notifyApplyResult(result);
+	}
+
+	/**
+	 * Advances to the next enabled highlight profile, saves, reloads, and shows a brief chat line.
+	 */
+	public static void cycleActiveProfile() {
+		LuipyUtilsConfig cfg = LuipyUtilsConfigManager.get();
+		cfg.ensureProfilesInitialized();
+		int start = Math.floorMod(cfg.activeBlockHighlightProfile, LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT);
+		int next = start;
+		do {
+			next = (next + 1) % LuipyUtilsConfig.HIGHLIGHT_PROFILE_COUNT;
+			if (next == start) {
+				break;
+			}
+		} while (!cfg.blockHighlightProfiles[next].enabled);
+
+		if (!cfg.blockHighlightProfiles[next].enabled) {
+			return;
+		}
+
+		cfg.activeBlockHighlightProfile = next;
+		LuipyUtilsConfig.HighlightProfile profile = cfg.activeHighlightProfile();
+		ParseResult result = parseBlockIds(profile.blockIds);
 		targetBlocks = result.blocks();
 		LuipyUtilsConfigManager.save();
 		refreshClientResources();
 
+		Minecraft client = Minecraft.getInstance();
+		if (client.player != null) {
+			String name = profile.name != null && !profile.name.isBlank() ? profile.name : "Profile " + (next + 1);
+			client.player.displayClientMessage(
+				Component.translatable("luipy-utils-mod.config.block_highlight.profile_cycled", name),
+				true
+			);
+		}
+	}
+
+	private static void notifyApplyResult(ParseResult result) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.player == null) {
 			return;

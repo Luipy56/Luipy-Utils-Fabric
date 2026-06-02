@@ -1,14 +1,15 @@
 package com.luipy.utilsmod.client.ender;
 
+import com.luipy.utilsmod.client.LuipyClientMessages;
 import com.luipy.utilsmod.client.LuipyClientState;
 import com.luipy.utilsmod.config.LuipyUtilsConfig;
 import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
+import com.luipy.utilsmod.ender.EnderGateAccess;
 import com.luipy.utilsmod.ender.EnderGateEvaluation;
 import com.luipy.utilsmod.network.LuipyNetworking;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 
 /**
  * Opens the unified menu (R) when config and server gates allow.
@@ -27,9 +28,14 @@ public final class LuipyUnifiedMenuOpener {
 			return;
 		}
 		if (client.player.isCreative()) {
+			LuipyClientMessages.featureFailure(client, "luipy-utils-mod.message.unified_creative");
 			return;
 		}
-		if (cfg.showEnderChestWithInventory && !EnderGateEvaluation.passesGate(cfg, client.player, client.level)) {
+		if (EnderGateAccess.enderGateBlocksUnifiedMenu(cfg, client.player, client.level)) {
+			String key = EnderGateEvaluation.failureMessageKey(cfg, client.player, client.level);
+			if (key != null) {
+				LuipyClientMessages.featureFailure(client, key);
+			}
 			return;
 		}
 
@@ -39,11 +45,6 @@ public final class LuipyUnifiedMenuOpener {
 			return;
 		}
 
-		if (cfg.showToastsOnFailure) {
-			client.player.displayClientMessage(
-				Component.translatable("luipy-utils-mod.message.unified_requires_mod_on_server"),
-				false
-			);
-		}
+		LuipyClientMessages.featureFailure(client, "luipy-utils-mod.message.unified_requires_mod_on_server");
 	}
 }

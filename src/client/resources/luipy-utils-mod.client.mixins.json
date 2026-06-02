@@ -6,7 +6,9 @@
 		"AbstractContainerScreenInvoker",
 		"EnchantmentMenuInvoker",
 		"EnchantmentScreenMixin",
-		"ShulkerOpenMixin"
+		"PackRepositoryMixin",
+		"ShulkerOpenMixin",
+		"LuipyUnifiedScreenScrollMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

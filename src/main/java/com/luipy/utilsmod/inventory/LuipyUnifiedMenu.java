@@ -1,7 +1,12 @@
 package com.luipy.utilsmod.inventory;
 
 import com.luipy.utilsmod.config.LuipyUtilsConfigManager;
+import com.luipy.utilsmod.inventory.workstation.UnifiedWorkstationLayout;
+import com.luipy.utilsmod.inventory.workstation.WorkstationKind;
+import com.luipy.utilsmod.inventory.workstation.WorkstationPanelHost;
 import com.mojang.datafixers.util.Pair;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
@@ -17,83 +22,51 @@ import net.minecraft.world.inventory.ResultSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 
 /**
- * Luipy unified menu (R): optional ender chest and crafting table panels above a compact player
- * inventory (main 3×9, hotbar, offhand — no armor column, no 2×2 player crafting).
+ * Luipy unified menu (R): optional workstation panels in a left column; optional ender chest and
+ * crafting table above a compact player inventory in the right column.
  *
- * <p>Slot indices are assigned top-to-bottom at construction time. Example when both optional panels
- * are enabled ({@code E=27} ender slots, {@code C=10} crafting slots = 9 grid + 1 result):
- * <pre>
- *   [0 .. E-1]           → player ender chest inventory
- *   [E .. E+C-2]         → transient 3×3 crafting grid
- *   [E+C-1]              → crafting result
- *   [E+C .. E+C+26]      → player main inventory (backing indices 9–35)
- *   [E+C+27 .. E+C+35]   → player hotbar (backing indices 0–8)
- *   [E+C+36]             → player offhand (backing index 40)
- * </pre>
+ * <p>Panel order (top to bottom): left column — anvil, smithing, cartography, grindstone,
+ * stonecutter, loom (each omitted when disabled or gate fails); right column — ender, craft, player.
  *
- * <p>Layout map (screen Y from top; must match {@code LuipyUnifiedScreen.renderBg} blits 1:1):
- * <pre>
- *   Top padding:          {@link #TOP_LAYOUT_PADDING} px before first panel
- *   Ender (optional):     slots at y = padding + 18 + row×18; blit generic_54 at padding
- *   Craft (optional):     grid y = 17 + row×18 + craftPanelTop; result y = 35 + craftPanelTop;
- *                         blit crafting_table at craftPanelTop, height {@link #CRAFTING_PANEL_HEIGHT}
- *   Player section:       blit inventory.png srcV={@link #PLAYER_TEXTURE_SRC_V}, height {@link #PLAYER_PANEL_HEIGHT}
- *     offhand y = ps + {@link #PLAYER_OFFHAND_Y}   (vanilla 62 − srcV)
- *     main y    = ps + {@link #PLAYER_MAIN_Y} + row×18 (vanilla 84 − srcV)
- *     hotbar y  = ps + {@link #PLAYER_HOTBAR_Y}   (vanilla 142 − srcV)
- *   where ps = {@link #playerSectionTop}.
- * </pre>
- *
- * <p>When a panel is disabled its slots are omitted and downstream indices shift accordingly.
- * See instance fields {@link #enderStart}, {@link #craftGridStart}, etc. for the live map.
- *
- * <p>Extension point: add future panels by inserting new slot blocks before the player section and
- * updating {@link #quickMoveStack} ranges in one place.
+ * <p>Slot indices are assigned at construction: left workstations first, then right-column panels,
+ * then player main/hotbar/offhand. See {@link #workstationHost} for workstation slot ranges.
  */
 public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
-	/** Extra top padding so optional panels and the player strip clear vanilla armor/craft chrome. */
 	public static final int TOP_LAYOUT_PADDING = 30;
 	public static final int ENDER_SLOT_COUNT = 27;
 	public static final int CRAFT_GRID_COUNT = 9;
-	/** Vertical space for the ender chest panel background (vanilla generic_54 header + 3 rows). */
 	public static final int ENDER_PANEL_HEIGHT = 17 + 3 * 18;
-	/** Vertical space for the crafting table panel background. */
 	public static final int CRAFTING_PANEL_HEIGHT = 17 + 3 * 18;
-	/** inventory.png srcV for the compact player strip (excludes armor / 2×2 craft chrome). */
 	public static final int PLAYER_TEXTURE_SRC_V = 51;
-	/** Vertical space for the compact player section (matches blitted inventory.png height). */
 	public static final int PLAYER_PANEL_HEIGHT = 115;
-	/** Y offset from player-section top to the offhand slot (vanilla 62 − {@link #PLAYER_TEXTURE_SRC_V}). */
 	public static final int PLAYER_OFFHAND_Y = 11;
-	/** Y offset from player-section top to the first main-inventory row (vanilla 84 − srcV). */
 	public static final int PLAYER_MAIN_Y = 33;
-	/** Y offset from player-section top to the hotbar row (vanilla 142 − srcV). */
 	public static final int PLAYER_HOTBAR_Y = 91;
+	public static final int RIGHT_COLUMN_X_OFFSET = UnifiedWorkstationLayout.LEFT_COLUMN_WIDTH;
 
+	public final List<WorkstationKind> enabledWorkstations;
+	public final int rightColumnX;
+	public final int leftColumnHeight;
+	public final int rightColumnContentTop;
 	public final boolean withEnder;
 	public final boolean withCrafting;
-	/** Y offset from screen top to the player inventory section. */
 	public final int playerSectionTop;
+	public final int totalContentHeight;
 
-	/** Inclusive start of ender chest menu slots, or {@code -1} when {@link #withEnder} is false. */
 	public final int enderStart;
-	/** Exclusive end of ender chest menu slots, or {@code -1}. */
 	public final int enderEnd;
-	/** First menu slot of the 3×3 crafting grid, or {@code -1}. */
 	public final int craftGridStart;
-	/** Menu slot of the crafting result, or {@code -1}. */
 	public final int craftResultIndex;
-	/** First menu slot of main inventory (player backing 9–35). */
 	public final int mainStart;
-	/** First menu slot of hotbar (player backing 0–8). */
 	public final int hotbarStart;
-	/** Menu slot of offhand (player backing 40). */
 	public final int offhandIndex;
-	/** Exclusive end of all player-backed slots (offhand + 1). */
 	public final int playerEndExclusive;
+
+	public final WorkstationPanelHost workstationHost;
 
 	private final CraftingContainer craftGrid;
 	private final ResultContainer craftResult;
@@ -103,22 +76,36 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 	public LuipyUnifiedMenu(int syncId, Inventory inventory) {
 		super(LuipyMenuTypes.UNIFIED, syncId);
 		var cfg = LuipyUtilsConfigManager.get();
-		this.withEnder = cfg.showEnderChestWithInventory;
+		Player player = inventory.player;
+		this.enabledWorkstations = UnifiedWorkstationLayout.resolve(cfg, player, player.level());
+		this.rightColumnX = enabledWorkstations.isEmpty() ? 0 : RIGHT_COLUMN_X_OFFSET;
+		this.withEnder = cfg.showEnderChestWithInventory
+			&& com.luipy.utilsmod.ender.EnderGateEvaluation.passesGate(cfg, player, player.level());
 		this.withCrafting = cfg.showCraftingTableWithInventory;
-		this.playerSectionTop = TOP_LAYOUT_PADDING
-			+ (withEnder ? ENDER_PANEL_HEIGHT : 0)
-			+ (withCrafting ? CRAFTING_PANEL_HEIGHT : 0);
+
+		Map<WorkstationKind, Integer> panelTops = UnifiedWorkstationLayout.panelTopOffsets(
+			enabledWorkstations, TOP_LAYOUT_PADDING);
+		this.leftColumnHeight = UnifiedWorkstationLayout.leftColumnHeight(enabledWorkstations, TOP_LAYOUT_PADDING);
+
+		int rightStackHeight = (withEnder ? ENDER_PANEL_HEIGHT : 0) + (withCrafting ? CRAFTING_PANEL_HEIGHT : 0);
+		this.rightColumnContentTop = Math.max(TOP_LAYOUT_PADDING, leftColumnHeight - rightStackHeight);
+		this.playerSectionTop = rightColumnContentTop + rightStackHeight;
+		this.totalContentHeight = Math.max(leftColumnHeight, playerSectionTop + PLAYER_PANEL_HEIGHT);
 
 		this.craftGrid = new TransientCraftingContainer(this, 3, 3);
 		this.craftResult = new ResultContainer();
-		this.owner = inventory.player;
-		this.enderChest = inventory.player.getEnderChestInventory();
+		this.owner = player;
+		this.enderChest = player.getEnderChestInventory();
+		this.workstationHost = new WorkstationPanelHost(enabledWorkstations);
+		this.workstationHost.initDelegates(inventory);
 
 		if (withEnder) {
-			enderChest.startOpen(inventory.player);
+			enderChest.startOpen(player);
 		}
 
 		int idx = 0;
+		idx = installWorkstationSlots(idx, panelTops, inventory);
+
 		int es = -1;
 		int ee = -1;
 		int cgs = -1;
@@ -126,9 +113,10 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 
 		if (withEnder) {
 			es = idx;
+			int enderY = rightColumnContentTop;
 			for (int row = 0; row < 3; row++) {
 				for (int col = 0; col < 9; col++) {
-					addSlot(new Slot(enderChest, col + row * 9, 8 + col * 18, TOP_LAYOUT_PADDING + 18 + row * 18));
+					addSlot(new Slot(enderChest, col + row * 9, rightColumnX + 8 + col * 18, enderY + 18 + row * 18));
 					idx++;
 				}
 			}
@@ -136,16 +124,16 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		}
 
 		if (withCrafting) {
-			int tableY = TOP_LAYOUT_PADDING + (withEnder ? ENDER_PANEL_HEIGHT : 0);
+			int tableY = rightColumnContentTop + (withEnder ? ENDER_PANEL_HEIGHT : 0);
 			cgs = idx;
 			for (int row = 0; row < 3; row++) {
 				for (int col = 0; col < 3; col++) {
-					addSlot(new Slot(craftGrid, col + row * 3, 30 + col * 18, 17 + row * 18 + tableY));
+					addSlot(new Slot(craftGrid, col + row * 3, rightColumnX + 30 + col * 18, 17 + row * 18 + tableY));
 					idx++;
 				}
 			}
 			cri = idx;
-			addSlot(new ResultSlot(inventory.player, craftGrid, craftResult, 0, 124, 35 + tableY));
+			addSlot(new ResultSlot(inventory.player, craftGrid, craftResult, 0, rightColumnX + 124, 35 + tableY));
 			idx++;
 		}
 
@@ -158,17 +146,17 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		this.mainStart = idx;
 		for (int row = 0; row < 3; row++) {
 			for (int col = 0; col < 9; col++) {
-				addSlot(new Slot(inventory, col + (row + 1) * 9, 8 + col * 18, ps + PLAYER_MAIN_Y + row * 18));
+				addSlot(new Slot(inventory, col + (row + 1) * 9, rightColumnX + 8 + col * 18, ps + PLAYER_MAIN_Y + row * 18));
 				idx++;
 			}
 		}
 		this.hotbarStart = idx;
 		for (int col = 0; col < 9; col++) {
-			addSlot(new Slot(inventory, col, 8 + col * 18, ps + PLAYER_HOTBAR_Y));
+			addSlot(new Slot(inventory, col, rightColumnX + 8 + col * 18, ps + PLAYER_HOTBAR_Y));
 			idx++;
 		}
 		this.offhandIndex = idx;
-		addSlot(new Slot(inventory, 40, 77, ps + PLAYER_OFFHAND_Y) {
+		addSlot(new Slot(inventory, 40, rightColumnX + 77, ps + PLAYER_OFFHAND_Y) {
 			@Override
 			public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
 				return Pair.of(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD);
@@ -178,16 +166,161 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		this.playerEndExclusive = idx;
 	}
 
+	private int installWorkstationSlots(int idx, Map<WorkstationKind, Integer> panelTops, Inventory inventory) {
+		Player player = inventory.player;
+		for (WorkstationKind kind : enabledWorkstations) {
+			int top = panelTops.getOrDefault(kind, TOP_LAYOUT_PADDING);
+			int start = idx;
+			idx = switch (kind) {
+				case ANVIL -> installAnvil(idx, top, player);
+				case SMITHING -> installSmithing(idx, top, player);
+				case CARTOGRAPHY -> installCartography(idx, top, player);
+				case GRINDSTONE -> installGrindstone(idx, top, player);
+				case STONECUTTER -> installStonecutter(idx, top, player);
+				case LOOM -> installLoom(idx, top, player);
+			};
+			workstationHost.recordRange(kind, start, idx, top);
+		}
+		return idx;
+	}
+
+	private int installAnvil(int idx, int top, Player player) {
+		var delegate = workstationHost.anvil();
+		addDataSlot(delegate.costSlot());
+		addSlot(new Slot(delegate.input(), 0, 27, 47 + top));
+		idx++;
+		addSlot(new Slot(delegate.input(), 1, 76, 47 + top));
+		idx++;
+		addSlot(combinerResultSlot(delegate, 134, 47 + top));
+		return idx + 1;
+	}
+
+	private int installSmithing(int idx, int top, Player player) {
+		var delegate = workstationHost.smithing();
+		addSlot(mayPlaceSlot(delegate.input(), 0, 8, 48 + top, delegate::mayPlaceTemplate));
+		idx++;
+		addSlot(mayPlaceSlot(delegate.input(), 1, 26, 48 + top, delegate::mayPlaceBase));
+		idx++;
+		addSlot(mayPlaceSlot(delegate.input(), 2, 44, 48 + top, delegate::mayPlaceAddition));
+		idx++;
+		addSlot(combinerResultSlot(delegate, 98, 48 + top));
+		return idx + 1;
+	}
+
+	private int installCartography(int idx, int top, Player player) {
+		var delegate = workstationHost.cartography();
+		addSlot(mayPlaceSlot(delegate.input(), 0, 15, 15 + top, stack -> stack.is(Items.FILLED_MAP)));
+		idx++;
+		addSlot(mayPlaceSlot(delegate.input(), 1, 15, 52 + top,
+			stack -> stack.is(Items.PAPER) || stack.is(Items.MAP) || stack.is(Items.GLASS_PANE)));
+		idx++;
+		addSlot(customResultSlot(delegate.result(), 145, 39 + top, player, delegate::onTake));
+		return idx + 1;
+	}
+
+	private int installGrindstone(int idx, int top, Player player) {
+		var delegate = workstationHost.grindstone();
+		addSlot(mayPlaceSlot(delegate.input(), 0, 49, 19 + top, delegate::mayPlaceInput));
+		idx++;
+		addSlot(mayPlaceSlot(delegate.input(), 1, 49, 40 + top, delegate::mayPlaceInput));
+		idx++;
+		addSlot(customResultSlot(delegate.result(), 129, 34 + top, player, delegate::onTake));
+		return idx + 1;
+	}
+
+	private int installStonecutter(int idx, int top, Player player) {
+		var delegate = workstationHost.stonecutter();
+		addDataSlot(delegate.recipeIndexSlot());
+		addSlot(new Slot(delegate.input(), 0, 20, 33 + top));
+		idx++;
+		addSlot(customResultSlot(delegate.result(), 143, 33 + top, player, delegate::onTake));
+		return idx + 1;
+	}
+
+	private int installLoom(int idx, int top, Player player) {
+		var delegate = workstationHost.loom();
+		addDataSlot(delegate.patternIndexSlot());
+		addSlot(mayPlaceSlot(delegate.input(), 0, 13, 26 + top, WorkstationPanelHost::mayPlaceBanner));
+		idx++;
+		addSlot(mayPlaceSlot(delegate.input(), 1, 33, 26 + top, WorkstationPanelHost::mayPlaceDye));
+		idx++;
+		addSlot(mayPlaceSlot(delegate.input(), 2, 23, 45 + top, WorkstationPanelHost::mayPlaceBannerPattern));
+		idx++;
+		addSlot(customResultSlot(delegate.output(), 143, 58 + top, player, delegate::onTake));
+		return idx + 1;
+	}
+
+	private Slot mayPlaceSlot(Container container, int index, int x, int y, java.util.function.Predicate<ItemStack> mayPlace) {
+		return new Slot(container, index, x, y) {
+			@Override
+			public boolean mayPlace(ItemStack stack) {
+				return mayPlace.test(stack);
+			}
+		};
+	}
+
+	private Slot combinerResultSlot(WorkstationPanelHost.CombinerDelegate delegate, int x, int y) {
+		return new Slot(delegate.result(), 0, x, y) {
+			@Override
+			public boolean mayPlace(ItemStack stack) {
+				return false;
+			}
+
+			@Override
+			public boolean mayPickup(Player p) {
+				return delegate.mayPickup(p, hasItem());
+			}
+
+			@Override
+			public void onTake(Player p, ItemStack stack) {
+				delegate.onTake(p, stack);
+			}
+		};
+	}
+
+	private interface ResultTake {
+		void onTake(Player player, ItemStack stack);
+	}
+
+	private Slot customResultSlot(Container result, int x, int y, Player player, ResultTake take) {
+		return new Slot(result, 0, x, y) {
+			@Override
+			public boolean mayPlace(ItemStack stack) {
+				return false;
+			}
+
+			@Override
+			public void onTake(Player p, ItemStack stack) {
+				take.onTake(p, stack);
+			}
+		};
+	}
+
 	@Override
 	public void slotsChanged(Container container) {
+		workstationHost.onSlotsChanged(container);
 		if (withCrafting && container == craftGrid) {
 			CraftingMenu.slotChangedCraftingGrid(this, owner.level(), owner, craftGrid, craftResult);
 		}
 	}
 
 	@Override
+	public boolean clickMenuButton(Player player, int buttonId) {
+		if (workstationHost.stonecutter() != null
+			&& workstationHost.clickMenuButton(player, WorkstationKind.STONECUTTER, buttonId)) {
+			return true;
+		}
+		if (workstationHost.loom() != null
+			&& workstationHost.clickMenuButton(player, WorkstationKind.LOOM, buttonId)) {
+			return true;
+		}
+		return super.clickMenuButton(player, buttonId);
+	}
+
+	@Override
 	public void removed(Player player) {
 		super.removed(player);
+		workstationHost.removed(player);
 		if (withCrafting) {
 			craftResult.clearContent();
 			if (!player.level().isClientSide()) {
@@ -204,10 +337,6 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		return true;
 	}
 
-	/**
-	 * Shift-click routing: ender/craft → player; player main ↔ hotbar; player → ender/craft when room.
-	 * Ranges use the instance slot map so panel toggles never leave stale index math.
-	 */
 	@Override
 	public ItemStack quickMoveStack(Player player, int index) {
 		ItemStack ret = ItemStack.EMPTY;
@@ -219,7 +348,11 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		ItemStack moved = slot.getItem();
 		ret = moved.copy();
 
-		if (withEnder && index >= enderStart && index < enderEnd) {
+		if (isWorkstationIndex(index)) {
+			if (!moveToPlayerMainAndHotbar(moved, false)) {
+				return ItemStack.EMPTY;
+			}
+		} else if (withEnder && index >= enderStart && index < enderEnd) {
 			if (!moveToPlayerMainAndHotbar(moved, false)) {
 				return ItemStack.EMPTY;
 			}
@@ -232,14 +365,12 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 				return ItemStack.EMPTY;
 			}
 		} else if (index >= mainStart && index < hotbarStart) {
-			// Main inventory → hotbar first, then optional panels.
 			if (!moveItemStackTo(moved, hotbarStart, offhandIndex, false)) {
 				if (!moveToOptionalPanels(moved)) {
 					return ItemStack.EMPTY;
 				}
 			}
 		} else if (index >= hotbarStart && index < offhandIndex) {
-			// Hotbar → main inventory first, then optional panels.
 			if (!moveItemStackTo(moved, mainStart, hotbarStart, false)) {
 				if (!moveToOptionalPanels(moved)) {
 					return ItemStack.EMPTY;
@@ -267,10 +398,15 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		return ret;
 	}
 
-	/**
-	 * Shift-click destination for optional panels → player inventory.
-	 * Main inventory first, then hotbar — never offhand (same order as vanilla chest/ender menus).
-	 */
+	private boolean isWorkstationIndex(int index) {
+		for (WorkstationPanelHost.SlotRange range : workstationHost.slotRanges().values()) {
+			if (index >= range.startInclusive() && index < range.endExclusive()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private boolean moveToPlayerMainAndHotbar(ItemStack moved, boolean reverse) {
 		if (moveItemStackTo(moved, mainStart, hotbarStart, reverse)) {
 			return true;
@@ -278,8 +414,12 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 		return moveItemStackTo(moved, hotbarStart, offhandIndex, reverse);
 	}
 
-	/** Tries ender chest then crafting grid for player-initiated shift-clicks. */
 	private boolean moveToOptionalPanels(ItemStack moved) {
+		for (WorkstationPanelHost.SlotRange range : workstationHost.slotRanges().values()) {
+			if (moveItemStackTo(moved, range.startInclusive(), range.endExclusive(), false)) {
+				return true;
+			}
+		}
 		if (withEnder && moveItemStackTo(moved, enderStart, enderEnd, false)) {
 			return true;
 		}
@@ -288,7 +428,24 @@ public class LuipyUnifiedMenu extends RecipeBookMenu<CraftingContainer> {
 
 	@Override
 	public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
-		return !withCrafting || slot.container != craftResult;
+		if (withCrafting && slot.container == craftResult) {
+			return false;
+		}
+		return !isWorkstationResultSlot(slot);
+	}
+
+	private boolean isWorkstationResultSlot(Slot slot) {
+		int menuIndex = slots.indexOf(slot);
+		if (menuIndex < 0) {
+			return false;
+		}
+		for (WorkstationKind kind : enabledWorkstations) {
+			WorkstationPanelHost.SlotRange range = workstationHost.slotRanges().get(kind);
+			if (range != null && menuIndex == range.endExclusive() - 1) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
