@@ -9,6 +9,9 @@ eclipse/
 .vscode/
 vanilla-test-server/
 
+# Accidental decompiled Minecraft sources at repo root (not mod code)
+/net/
+
 # autoagents (secrets + runtime digests)
 autoagents/.env
 autoagents/.runtime/*
