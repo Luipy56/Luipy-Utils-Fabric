@@ -26,7 +26,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 
 /**
- * Luipy unified menu (R): optional workstation panels in a left column; optional ender chest and
+ * Luipy unified menu (Alt+R): optional workstation panels in a left column; optional ender chest and
  * crafting table above a compact player inventory in the right column.
  *
  * <p>Panel order (top to bottom): left column — anvil, smithing, cartography, grindstone,

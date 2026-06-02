@@ -1,6 +1,7 @@
 package com.luipy.utilsmod.client.config;
 
 import com.luipy.utilsmod.client.config.ui.LuipyConfigScreen;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -19,7 +20,7 @@ public final class LuipyConfigKeybinds {
 	public static final String CATEGORY = "key.categories.luipy-utils-mod";
 	public static final KeyMapping OPEN_CONFIG = new KeyMapping(
 		"key.luipy-utils-mod.open_config",
-		GLFW.GLFW_KEY_R,
+		InputConstants.UNKNOWN.getValue(),
 		CATEGORY
 	);
 

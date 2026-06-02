@@ -22,7 +22,7 @@ DEFAULT_PORT = int(os.environ.get("AGENT_DASHBOARD_PORT", "8765"))
 SKIP_NAMES = {"README.md", "TEMPLATE.md"}
 COLUMN_ORDER = ("GITHUB", "NEW", "FEAT", "WIP", "UNTESTED", "TESTING", "CLOSED")
 FILE_STATUSES = ("NEW", "FEAT", "WIP", "UNTESTED", "TESTING", "CLOSED")
-COMPLETED_ACTIVE = {"TESTING", "CLOSED"}
+PENDING_COLUMNS = ("GITHUB", "NEW", "FEAT", "WIP", "UNTESTED", "TESTING")
 
 
 def load_env() -> None:
@@ -76,7 +76,7 @@ def collect_github_queue() -> tuple[list[str], str]:
     return queued, ""
 
 
-def collect_tasks() -> tuple[dict[str, list[str]], int, int, str]:
+def collect_tasks() -> tuple[dict[str, list[str]], int, str]:
     columns: dict[str, list[str]] = {s: [] for s in COLUMN_ORDER}
 
     for path in sorted(TASK_DIR.glob("*.md")):
@@ -87,14 +87,11 @@ def collect_tasks() -> tuple[dict[str, list[str]], int, int, str]:
     gh_items, gh_note = collect_github_queue()
     columns["GITHUB"] = gh_items
 
-    file_total = sum(len(columns[s]) for s in FILE_STATUSES)
-    total = file_total + len(gh_items)
-    completed = sum(len(columns[s]) for s in COMPLETED_ACTIVE)
-    return columns, total, completed, gh_note
+    pending = sum(len(columns[s]) for s in PENDING_COLUMNS)
+    return columns, pending, gh_note
 
 
-def render_html(columns: dict[str, list[str]], total: int, completed: int, gh_note: str) -> bytes:
-    pct = 100 if total == 0 else round((completed / total) * 100)
+def render_html(columns: dict[str, list[str]], pending: int, gh_note: str) -> bytes:
     cols_html = []
     for status in COLUMN_ORDER:
         items = columns[status]
@@ -123,10 +120,8 @@ def render_html(columns: dict[str, list[str]], total: int, completed: int, gh_no
 <link rel="stylesheet" href="/primordial.css">
 <style>
 .wrap {{ max-width: 1280px; }}
-.progress-wrap {{ margin-bottom: 1.5rem; }}
-.progress-meta {{ display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--blanco-muted); }}
-.progress-track {{ height: 1rem; border-radius: var(--radius-sm); background: var(--negro); border: 1px solid var(--gris-borde); overflow: hidden; }}
-.progress-fill {{ height: 100%; width: {pct}%; background: linear-gradient(90deg, var(--accent), var(--accent-hover)); box-shadow: 0 0 12px var(--accent-glow); transition: width 0.4s ease; }}
+.task-count {{ margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--blanco-muted); }}
+.task-count strong {{ color: var(--accent); font-family: 'JetBrains Mono', monospace; }}
 .columns {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }}
 .col {{ background: var(--gris-card); border: 1px solid var(--gris-borde); border-radius: var(--radius); padding: 0.75rem; min-height: 8rem; }}
 .col h3 {{ margin: 0 0 0.75rem; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: var(--accent); letter-spacing: 0.04em; }}
@@ -143,11 +138,7 @@ footer {{ margin-top: 1.5rem; font-size: 0.8rem; color: var(--blanco-muted); }}
 <div class="wrap">
 <header><h1>autoagents</h1></header>
 <main class="form">
-<h2>Progreso</h2>
-<div class="progress-wrap">
-<div class="progress-meta"><span>{completed} / {total} testeadas y cerradas</span><span>{pct}%</span></div>
-<div class="progress-track"><div class="progress-fill"></div></div>
-</div>
+<p class="task-count"><strong>{pending}</strong> tareas pendientes</p>
 <div class="columns">
 {"".join(cols_html)}
 </div>
@@ -166,8 +157,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = urlparse(self.path).path
         if path in ("/", "/index.html"):
-            columns, total, completed, gh_note = collect_tasks()
-            body = render_html(columns, total, completed, gh_note)
+            columns, pending, gh_note = collect_tasks()
+            body = render_html(columns, pending, gh_note)
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))

@@ -11,7 +11,7 @@ public final class LuipyUtilsConfig {
 	public static final String DEFAULT_HIGHLIGHT_BLOCK_IDS = "redstone_ore, gravel, clay";
 
 	public boolean masterEnabled = true;
-	/** When true, the unified menu (R) includes a 3×9 ender chest panel (requires mod on server). */
+	/** When true, the unified menu (Alt+R) includes a 3×9 ender chest panel (requires mod on server). */
 	@SerializedName(value = "showEnderChestWithInventory", alternate = { "replaceInventoryWithEnderChest" })
 	public boolean showEnderChestWithInventory = true;
 	/** When true, item/block gates below are ignored for opening (server still validates). */
@@ -27,7 +27,7 @@ public final class LuipyUtilsConfig {
 	public boolean showEnchantmentPreview = true;
 	/** When true, shift+right-clicking a shulker box in your inventory opens it as a container. */
 	public boolean allowOpenShulkerFromInventory = true;
-	/** When true, the unified menu (R) includes a 3×3 crafting table panel. */
+	/** When true, the unified menu (Alt+R) includes a 3×3 crafting table panel. */
 	public boolean showCraftingTableWithInventory = false;
 
 	// Workstation panels (left column) — all default off (opt-in).

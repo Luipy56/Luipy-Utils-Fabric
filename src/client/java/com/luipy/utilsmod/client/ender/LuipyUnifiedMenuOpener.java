@@ -12,7 +12,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
 
 /**
- * Opens the unified menu (R) when config and server gates allow.
+ * Opens the unified menu (Alt+R) when config and server gates allow.
  * Vanilla {@code E} is never intercepted — see {@link com.luipy.utilsmod.client.config.LuipyUnifiedMenuKeybinds}.
  */
 public final class LuipyUnifiedMenuOpener {
