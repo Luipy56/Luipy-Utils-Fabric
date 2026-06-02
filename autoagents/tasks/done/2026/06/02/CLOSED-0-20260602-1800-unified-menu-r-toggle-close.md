@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** R opened the unified menu but did not close it when pressed again.
+- **What was done:** `LuipyUnifiedMenuKeybinds` toggles via `OPEN_UNIFIED_MENU` / `LuipyUnifiedScreen.onClose()`; other screens still ignore R; EN/ES keybind copy updated.
+- **What was tested:** Static review of toggle/guards/lang; `./gradlew build` and runClient smoke at mod **0.1.35** — overall **PASS**.
+- **Why closed:** All testing criteria passed.
+- **Closed at (UTC):** 2026-06-02 19:23
+---
+
 # Unified menu — R toggles open and close
 
 ## GitHub Issue
@@ -53,3 +63,21 @@ Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
 ## References
 - **`LuipyUnifiedMenuKeybinds.java`**, **`LuipyUnifiedMenuOpener.java`**, **`LuipyUnifiedScreen.java`**
 - Prior: **`autoagents/tasks/done/2026/06/02/CLOSED-0-20260602-1201-unified-menu-keybind-r-xr.md`**
+
+## Test report
+
+1. **Date/time (UTC):** 2026-06-02 19:21:00 – 19:23:12 UTC
+2. **Environment:** branch `main`; `./gradlew build`, `./gradlew runClient` (smoke); Minecraft **1.20.1**; mod version **0.1.35**
+3. **What was tested:** R toggle open/close; R ignored on other screens; keybind lang; build; client smoke.
+4. **Results:**
+   - **1. R opens unified menu (gates pass)** — **PASS** (static): `LuipyUnifiedMenuOpener.tryOpen` when `screen == null` and `consumeClick()`.
+   - **2. R closes unified menu** — **PASS** (static): `LuipyUnifiedScreen.onClose()` when `screen instanceof LuipyUnifiedScreen`.
+   - **3. Vanilla inventory + R unchanged** — **PASS** (static): early return when `screen != null && !(screen instanceof LuipyUnifiedScreen)`.
+   - **4. Config screen + R unchanged** — **PASS** (static): same guard.
+   - **5. Keybinds tab EN/ES toggle text** — **PASS** (static): `open_unified_menu.desc` → "Opens or closes…" / "Abre o cierra…".
+   - **6. Controls KeyMapping rebind** — **PASS** (static): `OPEN_UNIFIED_MENU` registered; handler uses `consumeClick()`.
+   - **7. `./gradlew build`** — **PASS** (`BUILD SUCCESSFUL in 844ms`).
+   - **8. `./gradlew runClient`** — **PASS** (smoke): `luipy-utils-mod 0.1.35` loaded to main menu; no crash; client closed after test.
+5. **Overall:** **PASS**
+6. **Steps tested:** `./gradlew build`; static review of `LuipyUnifiedMenuKeybinds.java`, lang files; `./gradlew runClient` main-menu smoke.
+7. **GitHub:** Issue N/A (#0) — no `agent:testing` label applied.

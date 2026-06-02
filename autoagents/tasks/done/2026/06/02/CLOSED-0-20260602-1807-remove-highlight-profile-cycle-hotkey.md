@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** User wanted the H hotkey to cycle block highlight profiles removed; profile selection stays config-only.
+- **What was done:** Deleted `BlockHighlightProfileKeybinds`, removed `cycleActiveProfile`, Keybinds tab rows, Controls binding, and related EN/ES lang keys.
+- **What was tested:** Static grep/review for removed cycle path; Set active via World tab retained; `./gradlew build` and runClient smoke at mod **0.1.35** — overall **PASS**.
+- **Why closed:** All testing criteria passed.
+- **Closed at (UTC):** 2026-06-02 19:23
+---
+
 # Block highlight — remove profile cycle hotkey (H)
 
 ## GitHub Issue
@@ -55,3 +65,19 @@ Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
 ## References
 - **`BlockHighlightProfileKeybinds.java`**, **`BlockHighlightManager.java`**, **`LuipyConfigScreen.java`**
 - Prior: **`autoagents/tasks/done/2026/06/02/CLOSED-0-20260602-1402-block-highlight-profiles.md`**
+
+## Test report
+
+1. **Date/time (UTC):** 2026-06-02 19:21:00 – 19:23:12 UTC
+2. **Environment:** branch `main`; `./gradlew build`, `./gradlew runClient` (smoke); Minecraft **1.20.1**; mod version **0.1.35**
+3. **What was tested:** H cycle removal; Controls/Keybinds cleanup; Set active path retained; build; client smoke.
+4. **Results:**
+   - **1. H does nothing** — **PASS** (static): `BlockHighlightProfileKeybinds.java` deleted; no H handler in client init.
+   - **2. No Controls cycle binding** — **PASS** (static): no `cycle_highlight_profile` lang or `KeyMapping` in `src/`.
+   - **3. Keybinds tab — config + unified only** — **PASS** (static): `LuipyConfigScreen` Keybinds renders `open_config` + `open_unified_menu` rows only.
+   - **4. Set active via World tab** — **PASS** (static): `cycleActiveProfile` removed; profile activation via config UI unchanged.
+   - **5. `./gradlew build`** — **PASS** (`BUILD SUCCESSFUL`).
+   - **6. `./gradlew runClient`** — **PASS** (smoke): mod **0.1.35** loads; client closed after test.
+5. **Overall:** **PASS**
+6. **Steps tested:** `./gradlew build`; grep/static review for removed cycle hotkey; runClient smoke.
+7. **GitHub:** Issue N/A (#0) — no `agent:testing` label applied.

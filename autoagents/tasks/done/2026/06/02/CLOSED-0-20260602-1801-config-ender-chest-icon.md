@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Ender-themed Inventory config rows lacked the block icons already used on workstation rows.
+- **What was done:** Added `Items.ENDER_CHEST` as `iconItem` on five ender-related boolean entries in `LuipyConfigCategories`; existing screen rendering unchanged.
+- **What was tested:** Static review of icons/toggles/workstations; `./gradlew build` and runClient smoke at mod **0.1.35** — overall **PASS**.
+- **Why closed:** All testing criteria passed.
+- **Closed at (UTC):** 2026-06-02 19:23
+---
+
 # Config — ender chest block icon on Inventory rows
 
 ## GitHub Issue
@@ -53,3 +63,20 @@ Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
 ## References
 - **`LuipyConfigCategories.java`**, **`LuipyConfigBooleanEntry.java`**, **`LuipyConfigScreen.java`**
 - Prior: **`autoagents/tasks/done/2026/06/02/CLOSED-0-20260602-1403-unified-menu-left-workstation-panels.md`**
+
+## Test report
+
+1. **Date/time (UTC):** 2026-06-02 19:21:00 – 19:23:12 UTC
+2. **Environment:** branch `main`; `./gradlew build`, `./gradlew runClient` (smoke); Minecraft **1.20.1**; mod version **0.1.35**
+3. **What was tested:** Ender chest `iconItem` on Inventory rows; workstation icons unchanged; toggles; build; client smoke.
+4. **Results:**
+   - **1. Ender chest panel row icon** — **PASS** (static): `show_ender_with_inventory` uses `Items.ENDER_CHEST`; `LuipyConfigScreen` renders `iconItem` on Inventory tab.
+   - **2. HUD indicator row icon** — **PASS** (static): `show_ender_gate_hud` uses `Items.ENDER_CHEST`.
+   - **3. Gate toggles icon** — **PASS** (static): `always_virtual`, `require_item`, `require_block` each pass `Items.ENDER_CHEST`.
+   - **4. Workstation icons unchanged** — **PASS** (static): `addWorkstationEntries` still supplies per-block `iconItem`.
+   - **5. On/Off toggles still wired** — **PASS** (static): boolean entries unchanged except `iconItem` ctor arg.
+   - **6. `./gradlew build`** — **PASS** (`BUILD SUCCESSFUL`).
+   - **7. `./gradlew runClient`** — **PASS** (smoke): mod **0.1.35** loads; client closed after test.
+5. **Overall:** **PASS**
+6. **Steps tested:** `./gradlew build`; static review of `LuipyConfigCategories.java`, `LuipyConfigScreen.java`; runClient smoke.
+7. **GitHub:** Issue N/A (#0) — no `agent:testing` label applied.

@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** The ender chest HUD icon sat on the top edge of the hotbar instead of aligning with hotbar items.
+- **What was done:** `EnderGateHudIndicator` computes Y from vanilla hotbar geometry (`hotbarTop + (22 - 16) / 2`); horizontal gap and hide rules unchanged.
+- **What was tested:** Static centering/scale/gate checks; `./gradlew build` and runClient smoke at mod **0.1.35** — overall **PASS**.
+- **Why closed:** All testing criteria passed.
+- **Closed at (UTC):** 2026-06-02 19:23
+---
+
 # Ender gate HUD icon — vertically center on hotbar
 
 ## GitHub Issue
@@ -37,3 +47,20 @@ Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
 ## References
 - **`EnderGateHudIndicator.java`**, **`EnderGateAccess.java`**
 - Prior: **`autoagents/tasks/done/2026/06/02/CLOSED-0-20260602-1404-ender-gate-hud-indicator.md`**
+
+## Test report
+
+1. **Date/time (UTC):** 2026-06-02 19:21:00 – 19:23:12 UTC
+2. **Environment:** branch `main`; `./gradlew build`, `./gradlew runClient` (smoke); Minecraft **1.20.1**; mod version **0.1.35**
+3. **What was tested:** HUD icon vertical centering; hide conditions; GUI scale math; build; client smoke.
+4. **Results:**
+   - **1. `./gradlew build`** — **PASS** (`BUILD SUCCESSFUL`).
+   - **2. `./gradlew runClient` main-menu smoke** — **PASS**: mod **0.1.35** loads; no crash; client closed after test.
+   - **3. Icon vertically centered on hotbar** — **PASS** (static): `y = hotbarTop + (HOTBAR_BACKGROUND_HEIGHT - HOTBAR_ITEM_SIZE) / 2` with `hotbarTop = screenHeight - 22` (matches vanilla hotbar item Y).
+   - **4. GUI scale 2/3/4** — **PASS** (static): uses `getGuiScaledWidth/Height`; scales with video setting.
+   - **5. Gate fail or HUD toggle off → hidden** — **PASS** (static): `shouldShow` → `EnderGateAccess.enderHudGatePasses` includes `showEnderGateHudIndicator`.
+   - **6. Creative / F1 hide GUI → hidden** — **PASS** (static): `isCreative()` and `options.hideGui` checks in `shouldShow`.
+   - **7. mod_version** — **PASS**: **0.1.35** in `gradle.properties` / runClient log.
+5. **Overall:** **PASS**
+6. **Steps tested:** `./gradlew build`; static review of `EnderGateHudIndicator.java`, `EnderGateAccess.java`; runClient smoke.
+7. **GitHub:** Issue N/A (#0) — no `agent:testing` label applied.

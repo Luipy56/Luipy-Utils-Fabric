@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** A prior +30px `TOP_LAYOUT_PADDING` shift misaligned unified menu panels; user requested revert while keeping the localized title.
+- **What was done:** Set `TOP_LAYOUT_PADDING = 0` in `LuipyUnifiedMenu` so slot/panel coordinates and `renderBg` match pre-padding layout; lang title strings unchanged.
+- **What was tested:** Static layout/title/combo review; `./gradlew build` and runClient smoke at mod **0.1.35** — overall **PASS**.
+- **Why closed:** All testing criteria passed.
+- **Closed at (UTC):** 2026-06-02 19:23
+---
+
 # Unified menu — revert TOP_LAYOUT_PADDING (+30px shift)
 
 ## GitHub Issue
@@ -64,3 +74,18 @@ Run **`./scripts/bump-patch-version.sh`** once before UNTESTED-.
 ## References
 - **`LuipyUnifiedMenu.java`**, **`LuipyUnifiedScreen.java`**
 - Reverted task: **`autoagents/tasks/done/2026/06/02/CLOSED-0-20260602-1206-unified-menu-layout-title-fix.md`**
+
+## Test report
+
+1. **Date/time (UTC):** 2026-06-02 19:21:00 – 19:23:12 UTC
+2. **Environment:** branch `main`; `./gradlew build`, `./gradlew runClient` (smoke); Minecraft **1.20.1**; mod version **0.1.35**
+3. **What was tested:** `TOP_LAYOUT_PADDING` revert; title strings; slot/layout constants; panel combos; build; client smoke.
+4. **Results:**
+   - **1–5. Layout revert / slot alignment** — **PASS** (static): `TOP_LAYOUT_PADDING = 0`; ender slots at `rightColumnContentTop + 18 + row×18`; `playerSectionTop` = padding + right stack height; screen reads menu fields for `renderBg`.
+   - **6. Title "Unified Menu" / "Menú unificado"** — **PASS** (static): `luipy-utils-mod.screen.unified_menu` in EN/ES lang.
+   - **7. Panel combos (ender/craft/both/neither)** — **PASS** (static): `withEnder`/`withCrafting` branches; no crash paths in constructor.
+   - **8. `./gradlew build`** — **PASS** (`BUILD SUCCESSFUL`).
+   - **9. `./gradlew runClient`** — **PASS** (smoke): mod **0.1.35** loads; client closed after test.
+5. **Overall:** **PASS**
+6. **Steps tested:** `./gradlew build`; static review of `LuipyUnifiedMenu.java`, lang; runClient smoke.
+7. **GitHub:** Issue N/A (#0) — no `agent:testing` label applied.
