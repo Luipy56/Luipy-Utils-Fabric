@@ -65,7 +65,8 @@ public final class LuipyConfigCategories {
 			"luipy-utils-mod.config.show_crafting_table_with_inventory.desc",
 			cfg -> cfg.showCraftingTableWithInventory,
 			(cfg, v) -> cfg.showCraftingTableWithInventory = v,
-			false
+			false,
+			Items.CRAFTING_TABLE
 		));
 		list.add(new LuipyConfigBooleanEntry(
 			LuipyConfigCategory.INVENTORY,

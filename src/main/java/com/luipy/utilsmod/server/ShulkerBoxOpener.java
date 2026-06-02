@@ -19,17 +19,18 @@ public final class ShulkerBoxOpener {
 
 	public static void tryOpenFor(ServerPlayer player, int inventorySlotIndex) {
 		if (player.isSpectator()) return;
+		if (inventorySlotIndex < 0 || inventorySlotIndex > 35) return;
+
+		ItemStack shulkerItem = player.getInventory().getItem(inventorySlotIndex);
+		if (shulkerItem.isEmpty() || !(Block.byItem(shulkerItem.getItem()) instanceof ShulkerBoxBlock)) {
+			return;
+		}
 
 		if (player.containerMenu instanceof LuipyShulkerMenu openMenu) {
 			if (openMenu.getPlayerSlotIndex() == inventorySlotIndex) {
 				return;
 			}
 			player.closeContainer();
-		}
-
-		ItemStack shulkerItem = player.getInventory().getItem(inventorySlotIndex);
-		if (shulkerItem.isEmpty() || !(Block.byItem(shulkerItem.getItem()) instanceof ShulkerBoxBlock)) {
-			return;
 		}
 
 		SimpleContainer container = new SimpleContainer(27);

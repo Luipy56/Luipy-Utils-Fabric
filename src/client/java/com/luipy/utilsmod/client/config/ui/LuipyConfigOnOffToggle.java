@@ -1,5 +1,6 @@
 package com.luipy.utilsmod.client.config.ui;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
@@ -7,17 +8,15 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 /**
- * On/Off config toggle with green (on) and red (off) styling for {@link LuipyConfigScreen}.
+ * On/Off config toggle with vanilla button styling and green (on) / red (off) label text.
  */
 public final class LuipyConfigOnOffToggle extends AbstractButton {
-	private static final int COLOR_ON_BG = 0xFF2E6B2E;
 	private static final int COLOR_ON_TEXT = 0xFF88FF88;
-	private static final int COLOR_OFF_BG = 0xFF6B2E2E;
 	private static final int COLOR_OFF_TEXT = 0xFFFF8888;
-	private static final int COLOR_BORDER = 0xFF606060;
-	private static final int COLOR_BORDER_HOVER = 0xFFAAAAAA;
+	private static final int COLOR_DISABLED_TEXT = 0xFFA0A0A0;
 
 	private boolean value;
 	private final Component optionLabel;
@@ -76,23 +75,36 @@ public final class LuipyConfigOnOffToggle extends AbstractButton {
 
 	@Override
 	protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-		int bg = this.value ? COLOR_ON_BG : COLOR_OFF_BG;
-		int textColor = this.value ? COLOR_ON_TEXT : COLOR_OFF_TEXT;
-		int border = this.isHoveredOrFocused() ? COLOR_BORDER_HOVER : COLOR_BORDER;
-
-		graphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, bg);
-		graphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + 1, border);
-		graphics.fill(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, border);
-		graphics.fill(this.getX(), this.getY(), this.getX() + 1, this.getY() + this.height, border);
-		graphics.fill(this.getX() + this.width - 1, this.getY(), this.getX() + this.width, this.getY() + this.height, border);
-
-		graphics.drawCenteredString(
-			Minecraft.getInstance().font,
-			this.getMessage(),
-			this.getX() + this.width / 2,
-			this.getY() + (this.height - 8) / 2,
-			textColor
+		Minecraft minecraft = Minecraft.getInstance();
+		graphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
+		RenderSystem.enableBlend();
+		RenderSystem.enableDepthTest();
+		graphics.blitNineSliced(
+			WIDGETS_LOCATION,
+			this.getX(),
+			this.getY(),
+			this.getWidth(),
+			this.getHeight(),
+			20,
+			4,
+			200,
+			20,
+			0,
+			this.buttonTextureVOffset()
 		);
+		graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+		int textColor = this.active
+			? (this.value ? COLOR_ON_TEXT : COLOR_OFF_TEXT)
+			: COLOR_DISABLED_TEXT;
+		this.renderString(graphics, minecraft.font, textColor | Mth.ceil(this.alpha * 255.0F) << 24);
+	}
+
+	private int buttonTextureVOffset() {
+		if (!this.active) {
+			return 0;
+		}
+		return this.isHoveredOrFocused() ? 2 : 1;
 	}
 
 	@Override
