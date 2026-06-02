@@ -26,6 +26,9 @@ fi
 
 cd "$SCRIPTDIR" || exit 1
 
+[[ " $* " == *" --dashboard "* ]] && "$SCRIPTDIR/autoagents-dashboard.sh" &
+_a=(); for _x in "$@"; do [[ "$_x" != "--dashboard" ]] && _a+=("$_x"); done; set -- "${_a[@]}"
+
 have_cursor_agent() {
   command -v cursor-agent >/dev/null 2>&1
 }
@@ -551,7 +554,9 @@ run_full_cycle() {
 
 usage() {
   cat >&2 <<EOF
-Usage: $(basename "$0") [COMMAND]
+Usage: $(basename "$0") [--dashboard] [COMMAND]
+
+  --dashboard     Start ephemeral task progress web UI (background, port ${AGENT_DASHBOARD_PORT:-8765}).
 
   (no args)       Full agent cycle every ${AGENT_LOOP_SLEEP_MINUTES:-5} minutes.
 
